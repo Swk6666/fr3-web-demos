@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-Effector-Rooted Floating-Base Dynamics · Interactive 1 kHz Simulator</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <header class="topbar">
+      <div class="brand">
+        <span>FR3 Floating-Base Simulator</span>
+        <span class="brand-pill">1 kHz SE(3) + ProxQP · MuJoCo 4.0.1 WASM</span>
+      </div>
+      <nav class="demo-tabs" id="demoTabs">
+        <button class="demo-tab active" data-demo="0">1. Brandy Cup Hold</button>
+        <button class="demo-tab" data-demo="1">2. Figure-8 + Circle</button>
+        <button class="demo-tab" data-demo="2">3. Cart-Pole (BRT38)</button>
+        <button class="demo-tab" data-demo="4">4. Lotus Docking</button>
+        <button class="demo-tab" data-demo="5">5. Flexible Beam (3.5 m)</button>
+      </nav>
+      <div class="nav-links">
+        <button class="nav-link" id="btnToggleSidebar" title="Toggle telemetry & control sidebar (H)">Hide Panel</button>
+        <a class="nav-link" href="../">Project Page</a>
+      </div>
+    </header>
+
+    <main class="viewport-wrap">
+      <canvas id="viewport"></canvas>
+      <div class="hud-top-left">
+        <div class="hud-chip"><span class="k">ENGINE</span><span class="v">MuJoCo 4.0.1 · 1 kHz</span></div>
+        <div class="hud-chip"><span class="k">TIME</span><span class="v" id="hudTime">0.00 s</span></div>
+        <div class="hud-chip"><span class="k">SPEED</span><span class="v ok" id="hudRtf">1.00x RT</span></div>
+        <div class="hud-chip"><span class="k">PHASE</span><span class="v" id="hudPhase">INIT</span></div>
+      </div>
+      <div class="hud-bottom-left">
+        <button class="cam-btn active" data-cam="hero">Hero</button>
+        <button class="cam-btn" data-cam="workcell">Workcell</button>
+        <button class="cam-btn" data-cam="detail">Foundry Detail</button>
+        <button class="cam-btn" data-cam="base">Mobile Base</button>
+        <button class="cam-btn" data-cam="ee">End-Effector</button>
+        <button class="cam-btn" data-cam="side">Side</button>
+        <button class="cam-btn" data-cam="top">Top</button>
+      </div>
+      <div class="teleop-hud hidden" id="teleopHud">
+        <div class="teleop-hud-head">
+          <span class="teleop-badge" id="teleopBadge">KUKA BASE 6-DOF</span>
+          <span class="teleop-pill" id="teleopGearPill">1.0x</span>
+          <span class="teleop-pill hidden" id="teleopStatusPill">HOMING</span>
+        </div>
+        <div class="teleop-bars" id="teleopBars">
+          <div class="teleop-axis"><span>X</span><div class="tbar"><i id="tb0"></i></div></div>
+          <div class="teleop-axis"><span>Y</span><div class="tbar"><i id="tb1"></i></div></div>
+          <div class="teleop-axis"><span>Z</span><div class="tbar"><i id="tb2"></i></div></div>
+          <div class="teleop-axis"><span>Rx</span><div class="tbar"><i id="tb3"></i></div></div>
+          <div class="teleop-axis"><span>Ry</span><div class="tbar"><i id="tb4"></i></div></div>
+          <div class="teleop-axis"><span>Rz</span><div class="tbar"><i id="tb5"></i></div></div>
+        </div>
+        <div class="teleop-key-grid">
+          <div class="key-cluster">
+            <div class="key-row">
+              <button class="keycap" data-key="KeyQ" title="Down (-Z)">Q</button>
+              <button class="keycap" data-key="KeyW" title="Forward">W</button>
+              <button class="keycap" data-key="KeyE" title="Up (+Z)">E</button>
+            </div>
+            <div class="key-row">
+              <button class="keycap" data-key="KeyA" title="Left">A</button>
+              <button class="keycap" data-key="KeyS" title="Backward">S</button>
+              <button class="keycap" data-key="KeyD" title="Right">D</button>
+            </div>
+            <div class="cluster-lbl">Translate</div>
+          </div>
+          <div class="key-cluster">
+            <div class="key-row">
+              <button class="keycap" data-key="KeyU" title="Roll CCW">U</button>
+              <button class="keycap" data-key="KeyI" title="Pitch Fwd">I</button>
+              <button class="keycap" data-key="KeyO" title="Roll CW">O</button>
+            </div>
+            <div class="key-row">
+              <button class="keycap" data-key="KeyJ" title="Yaw Left">J</button>
+              <button class="keycap" data-key="KeyK" title="Pitch Back">K</button>
+              <button class="keycap" data-key="KeyL" title="Yaw Right">L</button>
+            </div>
+            <div class="cluster-lbl">Rotate</div>
+          </div>
+        </div>
+        <div class="teleop-foot">Shift: Fine · 1/2/3: Gear · R: Home · Space: Brake · Tab: Toggle</div>
+      </div>
+      <div class="loading-banner" id="loadingBanner">
+        <div class="load-card">
+          <div class="spinner"></div>
+          <div id="loadingText">Loading MuJoCo 4.0.1 WASM &amp; 3D CAD Assets…</div>
+          <div class="load-progress-track">
+            <div class="load-progress-fill" id="loadBarFill"></div>
+          </div>
+          <div class="load-progress-meta" id="loadProgressMeta">Preparing stream…</div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <section class="card">
+        <h3 id="demoTitle">1. Floating-Base Brandy Cup Hold</h3>
+        <p class="desc-text" id="demoDesc">
+          KUKA carrier injects continuous multi-axis base disturbance while FR3 runs 1 kHz SE(3) geometric impedance + 20-variable ProxQP to hold the end-effector steady in world space.
+        </p>
+      </section>
+
+      <section class="card">
+        <h3>Playback</h3>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button class="btn primary" id="btnPlayPause">Pause</button>
+          <button class="btn" id="btnReset">Reset</button>
+          <button class="btn" id="btnStep">+10 ms</button>
+        </div>
+        <div class="control-row">
+          <label for="selSpeed">Sim Speed</label>
+          <select id="selSpeed">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1.0x (Real-Time)</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2.0x</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Controller &amp; Disturbance</h3>
+        <div class="control-row">
+          <label class="toggle" title="Toggle End-Effector-Rooted SE(3)+ProxQP vs baseline controller">
+            <input type="checkbox" id="chkCtrl" checked /> <span id="lblCtrlToggle">SE(3) + ProxQP Active</span>
+          </label>
+        </div>
+        <div class="control-row" id="rowKukaMoving">
+          <label class="toggle"><input type="checkbox" id="chkMoving" checked /> KUKA Moving Base</label>
+        </div>
+        <div class="control-row" id="rowKukaScale">
+          <label title="Amplitude scale factor for automatic KUKA disturbance">Base Amp</label>
+          <input type="range" id="rngScale" min="0" max="2.5" step="0.1" value="1.0" />
+          <span class="val" id="valScale">1.0x</span>
+        </div>
+        <div class="control-row">
+          <label title="Translational virtual stiffness K_{λ,p} in A_λ λ̈ + D_λ λ̇ + K_λ λ = 0">SE(3) K<sub>&lambda;,p</sub></label>
+          <input type="range" id="rngKtrans" min="40" max="900" step="10" value="200" />
+          <span class="val" id="valKtrans">200</span>
+        </div>
+        <div class="control-row">
+          <label title="Rotational virtual stiffness K_{λ,R} in A_λ λ̈ + D_λ λ̇ + K_λ λ = 0">SE(3) K<sub>&lambda;,R</sub></label>
+          <input type="range" id="rngKrot" min="20" max="400" step="10" value="200" />
+          <span class="val" id="valKrot">200</span>
+        </div>
+      </section>
+
+      <section class="card" id="teleopCard">
+        <h3>KUKA Base Excitation &amp; 6-DOF Keyboard</h3>
+        <div class="control-row">
+          <label for="selTeleopTarget">Base Mode</label>
+          <select id="selTeleopTarget">
+            <option value="0" selected>Sinusoidal Wave</option>
+            <option value="2">Recorded Sea Wave (110 s)</option>
+            <option value="1">Keyboard 6-DOF (SpaceMouse)</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="selTeleopGear">Speed Gear (1/2/3)</label>
+          <select id="selTeleopGear">
+            <option value="0.4">0.4x Fine</option>
+            <option value="1" selected>1.0x Normal</option>
+            <option value="1.8">1.8x Fast</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label class="toggle"><input type="checkbox" id="chkCameraFrame" checked /> Camera-Aligned XY</label>
+        </div>
+        <div class="btn-row" style="margin-bottom:6px;">
+          <button class="btn" id="btnTeleopHome" title="2.5 s smooth quintic return to home (R)">Smooth Home (R)</button>
+          <button class="btn" id="btnTeleopBrake" title="Smooth exponential brake (Space)">Brake (Space)</button>
+        </div>
+        <div class="teleop-hint" id="teleopHint">
+          Select <strong>Recorded Sea Wave (110 s)</strong> for the multi-band experimental ocean spectrum, or press <code>Tab</code> to steer the KUKA base in 6-DOF (<code>WASD/QE</code> + <code>IKJL/UO</code>).
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>3D Visual Overlays</h3>
+        <div class="control-row">
+          <label class="toggle" title="Show desired trajectory path, target marker, and live end-effector trail">
+            <input type="checkbox" id="chkOverlayPath" checked /> Reference Path &amp; Trail
+          </label>
+        </div>
+        <div class="control-row">
+          <label class="toggle" title="Show 3D RGB coordinate frame triads for actual tool pose T_B (solid) and desired pose T_d (translucent)">
+            <input type="checkbox" id="chkOverlayFrames" checked /> SE(3) Frames (T<sub>B</sub> / T<sub>d</sub>)
+          </label>
+        </div>
+        <div class="control-row">
+          <label class="toggle" title="Show live 3D contact force vector F_c (Demo 4) or dynamic base reaction force Δf_s (Demo 5)">
+            <input type="checkbox" id="chkOverlayForce" checked /> Force Vector (F<sub>c</sub> / &Delta;f<sub>s</sub>)
+          </label>
+        </div>
+        <div class="control-row hidden" id="rowOverlayStress">
+          <label class="toggle" title="Color the 3.5 m beam by instantaneous local bending moment |M(x,t)|">
+            <input type="checkbox" id="chkOverlayStress" checked /> Bending Stress Heatmap |M(x)|
+          </label>
+        </div>
+        <div class="stress-legend hidden" id="stressLegend">
+          <span>0 N&middot;m</span>
+          <div class="stress-grad"></div>
+          <span>45+ N&middot;m</span>
+        </div>
+        <div class="control-row hidden" id="rowOverlayDeflect5x">
+          <label class="toggle" title="Overlay a visual-only 5x amplified deflection curve (physics remains 1:1 true scale)">
+            <input type="checkbox" id="chkOverlayDeflect5x" checked /> Visual 5&times; Deflection Curve
+          </label>
+        </div>
+      </section>
+
+      <section class="card" id="taskCard">
+        <h3>Interactive Task Controls</h3>
+        <div id="taskControls"></div>
+      </section>
+
+      <section class="card">
+        <h3>Live Telemetry</h3>
+        <div class="metric-grid" id="metricGrid"></div>
+      </section>
+
+      <section class="card">
+        <h3 id="chart1Title">End-Effector Error &amp; RMSE (mm)</h3>
+        <canvas class="chart" id="chart1"></canvas>
+        <div class="chart-legend" id="chart1Legend"></div>
+      </section>
+
+      <section class="card">
+        <h3>FR3 Joint Torques &tau;<sub>sdk</sub> (J1–J7, N&middot;m)</h3>
+        <canvas class="chart" id="chart2"></canvas>
+      </section>
+    </aside>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="fr3_beam_3m5">
+  <compiler angle="radian" autolimits="true" />
+  <option timestep="0.001" integrator="implicitfast" gravity="0 0 -9.81" jacobian="dense">
+    <flag filterparent="disable" />
+  </option>
+  <default>
+    <geom contype="0" conaffinity="0" />
+  </default>
+  <default>
+    <default class="fr3">
+      <joint damping="0.21" armature="0.195" frictionloss="1.137" />
+      <position inheritrange="1" />
+      <default class="collision">
+        <geom type="mesh" group="3" mass="0" density="0" />
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4" />
+    </default>
+  </default>
+  <asset>
+    <mesh name="link0_coll" file="link0_coll.stl" />
+    <mesh name="link1_coll" file="link1_coll.stl" />
+    <mesh name="link2_coll" file="link2_coll.stl" />
+    <mesh name="link3_coll" file="link3_coll.stl" />
+    <mesh name="link4_coll" file="link4_coll.stl" />
+    <mesh name="link5_coll" file="link5_coll.stl" />
+    <mesh name="link6_coll" file="link6_coll.stl" />
+    <mesh name="link7_coll" file="link7_coll.stl" />
+  </asset>
+  <worldbody>
+    <geom name="floor" pos="0 0 0" size="29 20 .2" type="plane" contype="1" conaffinity="2" />
+    <body name="link7" pos="0 0 0" quat="1 0 0 0">
+      <freejoint name="freejoint" />
+      <inertial pos="0.00452258 0.00862619 -0.0161633" quat="0.727579 0.0978688 -0.24906 0.63168" mass="0.627143" diaginertia="0.000223836 0.000223642 5.64132e-07" />
+      <geom name="fr3_link7_collision" class="collision" mesh="link7_coll" contype="1" conaffinity="2" />
+      <site name="link7_site" />
+      <site name="attachment_site" pos="0 0 0.107" />
+      <body name="link6" pos="-0.088 0 0" quat="0.70710678 -0.70710678 0 0">
+        <inertial pos="0.0597131 -0.0410295 -0.0101693" quat="0.621301 0.552665 0.510011 0.220081" mass="1.81704" diaginertia="0.0175039 0.0161123 0.00193529" />
+        <joint name="joint7" pos="0.088 0 0" axis="0 1 0" range="-3.0159 3.0159" actuatorfrcrange="-12 12" armature="0.037" frictionloss="0.248" damping="0.21" />
+        <geom name="fr3_link6_collision" class="collision" mesh="link6_coll" contype="1" conaffinity="2" />
+        <body name="link5" pos="0 0 0" quat="0.70710678 -0.70710678 0 0">
+          <inertial pos="-0.00160396 0.0292536 -0.0972966" quat="0.919031 0.125604 0.0751531 -0.366003" mass="2.32712" diaginertia="0.0579335 0.0449144 0.0130634" />
+          <joint name="joint6" pos="0 0 0" axis="0 1 0" range="0.5445 4.5169" actuatorfrcrange="-12 12" damping="0.21" armature="0.037" frictionloss="0.44" />
+          <geom name="fr3_link5_collision" class="collision" mesh="link5_coll" contype="1" conaffinity="2" />
+          <body name="link4" pos="0.0825 0 -0.384" quat="0.70710678 0.70710678 0 0">
+            <inertial pos="-0.0459101 0.0630493 -0.00851879" quat="0.438018 0.803311 0.00937812 0.403414" mass="2.6156" diaginertia="0.05139 0.0372717 0.0160047" />
+            <joint name="joint5" pos="-0.0825 0.384 0" axis="0 -1 0" range="-2.8065 2.8065" actuatorfrcrange="-12 12" armature="0.037" frictionloss="0.763" damping="0.21" />
+            <geom name="fr3_link4_collision" class="collision" mesh="link4_coll" contype="1" conaffinity="2" />
+            <body name="link3" pos="-0.0825 0 0" quat="0.70710678 -0.70710678 0 0">
+              <inertial pos="0.0407016 -0.00482006 -0.0289731" quat="0.921025 -0.244161 0.155272 0.260745" mass="2.2449" diaginertia="0.0267409 0.0189869 0.0171587" />
+              <joint name="joint4" pos="0.0825 0 0" axis="0 1 0" range="-3.0421 -0.1518" actuatorfrcrange="-87 87" damping="0.21" armature="0.0975" frictionloss="1.137" />
+              <geom name="fr3_link3_collision" class="collision" mesh="link3_coll" contype="1" conaffinity="2" />
+              <body name="link2" pos="0 0 -0.316" quat="0.70710678 -0.70710678 0 0">
+                <inertial pos="0.00318289 -0.0743222 0.00881461" quat="0.502599 0.584437 -0.465998 0.434366" mass="2.93554" diaginertia="0.0629567 0.0411924 0.0246371" />
+                <joint name="joint3" pos="0 -0.316 0" axis="0 1 0" range="-2.9007 2.9007" actuatorfrcrange="-87 87" damping="0.21" armature="0.0975" frictionloss="1.137" />
+                <geom name="fr3_link2_collision" class="collision" mesh="link2_coll" contype="1" conaffinity="2" />
+                <body name="link1" pos="0 0 0" quat="0.70710678 0.70710678 0 0">
+                  <inertial pos="4.128e-07 -0.0181251 -0.0386036" quat="0.998098 -0.0605364 0.00380499 0.0110109" mass="2.92747" diaginertia="0.0239286 0.0227246 0.00610634" />
+                  <joint name="joint2" pos="0 0 0" axis="0 -1 0" range="-1.7837 1.7837" actuatorfrcrange="-87 87" damping="0.21" armature="0.0975" frictionloss="1.137" />
+                  <geom name="fr3_link1_collision" class="collision" mesh="link1_coll" contype="1" conaffinity="2" />
+                  <body name="link0" pos="0 0 -0.333" quat="1 0 0 0">
+                    <joint name="joint1" pos="0 0 0.333" axis="0 0 -1" range="-2.7437 2.7437" actuatorfrcrange="-87 87" damping="0.21" armature="0.0975" frictionloss="1.137" />
+                    <inertial pos="-0.0172 0.0004 0.0745" mass="2.3966" diaginertia="0.009 0.0115 0.0085" />
+                    <geom name="fr3_link0_collision" mesh="link0_coll" class="collision" contype="1" conaffinity="2" />
+                    <body name="transition_plate" pos="-0.0399996526 0.0000003614 -0.0299987132" quat="0.50000404 0.49999988 0.49999433 0.50000175">
+                      <inertial mass="1" pos="0 0 0" diaginertia="0.01 0.01 0.01" />
+                      <site name="transition_plate_site" />
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="revj_receiver" pos="0 0 .139" xyaxes=".707106781186548 .707106781186548 0 .707106781186548 -.707106781186548 0">
+        <inertial pos="-7.60642213865e-08 -7.95955728508e-08 0.0059293370369" mass="0.129050025752" fullinertia="4.97828828986e-05 0.000146835746218 0.000161530492865 -6.32539196043e-11 -1.30136154787e-10 2.45046358526e-10" />
+        <site name="revj_mount_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="revj_exchange_site" pos="0 0 -0.01" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="imu_cad_site" pos="-0.0157500055188 -0.0135999947152 0.0293776331439" size=".0015" group="4" rgba="0 0 0 0" xyaxes="5.8877671481e-07 1 0 1 -5.88776714873e-07 0" />
+        <site name="imu_measurement_site" pos="0.00770017787071 0.00679999147602 0.02224" size=".0015" group="4" rgba="0 0 0 0" xyaxes="5.8877671481e-07 1 0 1 -5.88776714873e-07 0" />
+        <site name="mocap_marker_1_site" pos="0.0250375607644 0.0609208533852 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="mocap_marker_2_site" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="mocap_marker_3_site" pos="-0.0259742565059 0.0612166499685 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="tracker" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" xyaxes="-1 0 0 0 1 0" />
+        <geom name="revj_receiver_collision" type="box" pos="0 0 -0.002" size="0.061 0.033 0.008" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+        <geom name="revj_mti_collision" type="box" pos="0 0.0004 0.02155" size="0.0158 0.0141 0.0065" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+        <body name="revj_cup">
+          <inertial pos="-6.33904527608e-05 -6.50468566055e-08 -0.115180226341" mass="0.235665814021" fullinertia="0.00104391681095 0.00140596987142 0.000679947267834 -9.76317850895e-10 1.51730672671e-06 1.56020604484e-10" />
+          <site name="tray_surface_site" pos="0 0 -0.162" size=".0015" group="4" rgba="0 0 0 0" />
+          <geom name="cup_tray_floor" type="cylinder" pos="0 0 -0.165" size="0.068 0.003" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+          <geom name="cup_outer_rim_00" type="box" pos="0.0665 0 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="1 0 0 0" />
+          <geom name="cup_outer_rim_01" type="box" pos="0.0652222211468 0.0129735064141 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.995184726672 0 0 0.0980171403296" />
+          <geom name="cup_outer_rim_02" type="box" pos="0.061437988912 0.0254484482523 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.980785280403 0 0 0.195090322016" />
+          <geom name="cup_outer_rim_03" type="box" pos="0.0552927292181 0.0369454204958 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.956940335732 0 0 0.290284677254" />
+          <geom name="cup_outer_rim_04" type="box" pos="0.0470226009489 0.0470226009489 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.923879532511 0 0 0.382683432365" />
+          <geom name="cup_outer_rim_05" type="box" pos="0.0369454204958 0.0552927292181 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.881921264348 0 0 0.471396736826" />
+          <geom name="cup_outer_rim_06" type="box" pos="0.0254484482523 0.061437988912 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.831469612303 0 0 0.55557023302" />
+          <geom name="cup_outer_rim_07" type="box" pos="0.0129735064141 0.0652222211468 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.773010453363 0 0 0.634393284164" />
+          <geom name="cup_outer_rim_08" type="box" pos="0 0.0665 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.707106781187 0 0 0.707106781187" />
+          <geom name="cup_outer_rim_09" type="box" pos="-0.0129735064141 0.0652222211468 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.634393284164 0 0 0.773010453363" />
+          <geom name="cup_outer_rim_10" type="box" pos="-0.0254484482523 0.061437988912 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.55557023302 0 0 0.831469612303" />
+          <geom name="cup_outer_rim_11" type="box" pos="-0.0369454204958 0.0552927292181 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.471396736826 0 0 0.881921264348" />
+          <geom name="cup_outer_rim_12" type="box" pos="-0.0470226009489 0.0470226009489 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.382683432365 0 0 0.923879532511" />
+          <geom name="cup_outer_rim_13" type="box" pos="-0.0552927292181 0.0369454204958 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.290284677254 0 0 0.956940335732" />
+          <geom name="cup_outer_rim_14" type="box" pos="-0.061437988912 0.0254484482523 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.195090322016 0 0 0.980785280403" />
+          <geom name="cup_outer_rim_15" type="box" pos="-0.0652222211468 0.0129735064141 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0.0980171403296 0 0 0.995184726672" />
+          <geom name="cup_outer_rim_16" type="box" pos="-0.0665 0 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="0 0 0 1" />
+          <geom name="cup_outer_rim_17" type="box" pos="-0.0652222211468 -0.0129735064141 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.0980171403296 0 0 0.995184726672" />
+          <geom name="cup_outer_rim_18" type="box" pos="-0.061437988912 -0.0254484482523 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.195090322016 0 0 0.980785280403" />
+          <geom name="cup_outer_rim_19" type="box" pos="-0.0552927292181 -0.0369454204958 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.290284677254 0 0 0.956940335732" />
+          <geom name="cup_outer_rim_20" type="box" pos="-0.0470226009489 -0.0470226009489 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.382683432365 0 0 0.923879532511" />
+          <geom name="cup_outer_rim_21" type="box" pos="-0.0369454204958 -0.0552927292181 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.471396736826 0 0 0.881921264348" />
+          <geom name="cup_outer_rim_22" type="box" pos="-0.0254484482523 -0.061437988912 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.55557023302 0 0 0.831469612303" />
+          <geom name="cup_outer_rim_23" type="box" pos="-0.0129735064141 -0.0652222211468 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.634393284164 0 0 0.773010453363" />
+          <geom name="cup_outer_rim_24" type="box" pos="0 -0.0665 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.707106781187 0 0 0.707106781187" />
+          <geom name="cup_outer_rim_25" type="box" pos="0.0129735064141 -0.0652222211468 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.773010453363 0 0 0.634393284164" />
+          <geom name="cup_outer_rim_26" type="box" pos="0.0254484482523 -0.061437988912 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.831469612303 0 0 0.55557023302" />
+          <geom name="cup_outer_rim_27" type="box" pos="0.0369454204958 -0.0552927292181 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.881921264348 0 0 0.471396736826" />
+          <geom name="cup_outer_rim_28" type="box" pos="0.0470226009489 -0.0470226009489 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.923879532511 0 0 0.382683432365" />
+          <geom name="cup_outer_rim_29" type="box" pos="0.0552927292181 -0.0369454204958 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.956940335732 0 0 0.290284677254" />
+          <geom name="cup_outer_rim_30" type="box" pos="0.061437988912 -0.0254484482523 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.980785280403 0 0 0.195090322016" />
+          <geom name="cup_outer_rim_31" type="box" pos="0.0652222211468 -0.0129735064141 -0.158" size="0.0015 0.00654967832325 0.004" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" quat="-0.995184726672 0 0 0.0980171403296" />
+          <geom name="cup_arm_left" type="box" pos="-0.059 0 -0.088" size="0.003 0.012 0.072" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+          <geom name="cup_arm_right" type="box" pos="0.059 0 -0.088" size="0.003 0.012 0.072" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+          <body name="task_mount" pos="0 0 -0.162">
+            <inertial mass="1e-6" pos="0 0 0" diaginertia="1e-9 1e-9 1e-9" />
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="wine_glass" pos="0.359665950298 0.0003130047913 2.09442169067" quat="0.923824966746 9.49333688868e-05 -0.000673540498737 0.382814534922">
+      <freejoint name="wine_glass_free" />
+      <inertial pos="-1.80472015647e-08 -9.35748223069e-08 0.0577246447517" mass="0.235243147695" fullinertia="0.0004189531472 0.000418952798562 0.000239483777569 7.71960982325e-11 -2.57596710136e-10 -1.17952023917e-09" />
+      <geom name="wine_foot_collision" type="cylinder" pos="0 0 0.0013" size="0.0395 0.0013" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" friction=".45 .004 .0001" />
+      <geom name="wine_bowl_collision" type="ellipsoid" pos="0 0 0.086" size="0.0495 0.0495 0.043" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" />
+      <site name="cup_foot_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
+      <site name="cup_rim_site" pos="0 0 0.132" size=".0015" group="4" rgba="0 0 0 0" />
+    </body>
+    <body name="beam_root" pos="-3.5 0 1.55" quat="1 0 0 0">
+      <site name="beam_root_site" pos="0 0 0" />
+      <body name="beam_seg_0" pos="0.21875 0 0" quat="1 0 0 0">
+        <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+        <joint name="beam_j0_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+        <joint name="beam_j0_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+        <joint name="beam_j0_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+        <body name="beam_seg_1" pos="0.4375 0 0" quat="1 0 0 0">
+          <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+          <joint name="beam_j1_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+          <joint name="beam_j1_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+          <joint name="beam_j1_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+          <body name="beam_seg_2" pos="0.4375 0 0" quat="1 0 0 0">
+            <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+            <joint name="beam_j2_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+            <joint name="beam_j2_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+            <joint name="beam_j2_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+            <body name="beam_seg_3" pos="0.4375 0 0" quat="1 0 0 0">
+              <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+              <joint name="beam_j3_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+              <joint name="beam_j3_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+              <joint name="beam_j3_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+              <body name="beam_seg_4" pos="0.4375 0 0" quat="1 0 0 0">
+                <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+                <joint name="beam_j4_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+                <joint name="beam_j4_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+                <joint name="beam_j4_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+                <body name="disturber_mount" pos="0.21875 0 0.032" quat="1 0 0 0">
+                  <inertial pos="0 0 0.02" mass="1.0" diaginertia="0.008 0.008 0.008" />
+                  <body name="disturber_link1" pos="0 0 0.075" quat="1 0 0 0">
+                    <joint name="dist_j1" type="hinge" axis="0 0 1" damping="2.0" armature="0.08" range="-2.8 2.8" />
+                    <inertial pos="0 0 0.14" mass="3.2" diaginertia="0.035 0.035 0.012" />
+                    <body name="disturber_link2" pos="0 0 0.28" quat="1 0 0 0">
+                      <joint name="dist_j2" type="hinge" axis="0 1 0" damping="2.0" armature="0.08" range="-1.8 1.8" />
+                      <inertial pos="0 0 0.19" mass="3.6" diaginertia="0.055 0.055 0.012" />
+                      <body name="disturber_link3" pos="0 0 0.38" quat="1 0 0 0">
+                        <joint name="dist_j3" type="hinge" axis="0 1 0" damping="1.5" armature="0.06" range="-2.2 2.2" />
+                        <inertial pos="0 0 0.16" mass="4.2" diaginertia="0.048 0.048 0.018" />
+                      </body>
+                    </body>
+                  </body>
+                </body>
+                <body name="beam_seg_5" pos="0.4375 0 0" quat="1 0 0 0">
+                  <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+                  <joint name="beam_j5_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+                  <joint name="beam_j5_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+                  <joint name="beam_j5_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+                  <body name="beam_seg_6" pos="0.4375 0 0" quat="1 0 0 0">
+                    <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+                    <joint name="beam_j6_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+                    <joint name="beam_j6_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+                    <joint name="beam_j6_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+                    <body name="beam_seg_7" pos="0.4375 0 0" quat="1 0 0 0">
+                      <inertial pos="0 0 0" mass="0.65" diaginertia="0.0012 0.011 0.011" />
+                      <joint name="beam_j7_rx" type="hinge" axis="1 0 0" stiffness="29260.7" damping="175.564" armature="0.004" range="-0.45 0.45" />
+                      <joint name="beam_j7_ry" type="hinge" axis="0 1 0" stiffness="26620" damping="159.72" armature="0.006" range="-0.45 0.45" />
+                      <joint name="beam_j7_rz" type="hinge" axis="0 0 1" stiffness="43120" damping="258.72" armature="0.006" range="-0.45 0.45" />
+                      <body name="beam_tip" pos="0.21875 0 0" quat="1 0 0 0">
+                        <inertial pos="0 0 0" mass="1.0" diaginertia="0.012 0.012 0.018" />
+                        <site name="beam_tip_site" pos="0 0 0" />
+                        <body name="force_sensor_tip" pos="0 0 0.032" quat="0.5 0.5 0.5 0.5">
+                          <inertial pos="0 0 0" mass="1e-6" diaginertia="1e-9 1e-9 1e-9" />
+                          <site name="force_sensor_weld_site" pos="0 0 0" />
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <motor name="actuator1" joint="joint1" />
+    <motor name="actuator2" joint="joint2" />
+    <motor name="actuator3" joint="joint3" />
+    <motor name="actuator4" joint="joint4" />
+    <motor name="actuator5" joint="joint5" />
+    <motor name="actuator6" joint="joint6" />
+    <motor name="actuator7" joint="joint7" />
+    <position name="adist1" joint="dist_j1" kp="400" kv="40" ctrlrange="-2.8 2.8" />
+    <position name="adist2" joint="dist_j2" kp="400" kv="40" ctrlrange="-1.8 1.8" />
+    <position name="adist3" joint="dist_j3" kp="300" kv="30" ctrlrange="-2.2 2.2" />
+  </actuator>
+  <sensor>
+    <force name="attachment_site_force" site="force_sensor_weld_site" />
+    <torque name="attachment_site_torque" site="force_sensor_weld_site" />
+    <jointactuatorfrc name="fr3_joint_torque_joint1" joint="joint1" />
+    <jointactuatorfrc name="fr3_joint_torque_joint2" joint="joint2" />
+    <jointactuatorfrc name="fr3_joint_torque_joint3" joint="joint3" />
+    <jointactuatorfrc name="fr3_joint_torque_joint4" joint="joint4" />
+    <jointactuatorfrc name="fr3_joint_torque_joint5" joint="joint5" />
+    <jointactuatorfrc name="fr3_joint_torque_joint6" joint="joint6" />
+    <jointactuatorfrc name="fr3_joint_torque_joint7" joint="joint7" />
+  </sensor>
+  <equality>
+    <weld name="grasp1" site1="force_sensor_weld_site" site2="transition_plate_site" solref="0.004 1" solimp=".97 .99 0.0005" active="false" torquescale="1" />
+  </equality>
+</mujoco>

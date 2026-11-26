@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-Effector-Rooted Floating-Base Dynamics for Whole-Body Control of Manipulators Under Unknown Base Motion · Interactive Supplementary Material</title>
+  <style>
+    :root {
+      --bg: #181d23;
+      --bg-2: #1f252d;
+      --card: #232a33;
+      --card-2: #29313b;
+      --border: #3a4451;
+      --text: #eef2f6;
+      --soft: #cbd5e1;
+      --muted: #94a3b8;
+      --accent: #f26c1d;
+      --accent-hover: #ff7f36;
+      --cool: #52b6e6;
+      --ok: #34d399;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    sub, sup { font-size: 0.72em; line-height: 0; }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at 50% -12%, #313b47 0%, var(--bg) 54%);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 44px 24px 68px; }
+
+    /* Academic Paper Hero Header */
+    .paper-header { text-align: center; max-width: 880px; margin: 0 auto 30px; }
+    .review-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(242, 108, 29, 0.14);
+      border: 1px solid rgba(242, 108, 29, 0.42);
+      color: #ffa26b;
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    h1 {
+      font-size: clamp(26px, 3.8vw, 40px);
+      margin: 16px 0 12px;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      font-weight: 750;
+    }
+    .authors {
+      color: var(--soft);
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0 0 4px;
+    }
+    .venue {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 0 22px;
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      text-decoration: none;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 16px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .pill-btn:hover { transform: translateY(-1px); border-color: var(--cool); background: var(--card-2); }
+    .pill-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(242, 108, 29, 0.30);
+    }
+    .pill-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .pill-btn.secondary {
+      border-color: rgba(82, 182, 230, 0.50);
+      color: #93d6f5;
+      background: rgba(82, 182, 230, 0.10);
+    }
+    .pill-btn.secondary:hover { background: rgba(82, 182, 230, 0.18); color: #ffffff; }
+    .pill-btn.muted {
+      color: var(--muted);
+      cursor: default;
+      opacity: 0.78;
+    }
+    .pill-btn.muted:hover { transform: none; border-color: var(--border); background: var(--card); }
+
+    /* Live WASM Authenticity Callout */
+    .authenticity {
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.09) 0%, rgba(82, 182, 230, 0.08) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.34);
+      border-radius: 13px;
+      padding: 16px 20px;
+      margin-bottom: 34px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .auth-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.75);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .authenticity strong { color: #a7f3d0; }
+    .authenticity p { margin: 0; font-size: 13.5px; color: var(--soft); }
+
+    /* Section Headings */
+    .sec-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 34px 0 14px;
+    }
+    .sec-head h2 { margin: 0; font-size: 19px; letter-spacing: -0.01em; }
+    .sec-head span { font-size: 12.5px; color: var(--muted); }
+
+    /* Method Cards */
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 14px;
+    }
+    .method-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .method-card .m-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--cool);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .method-card h3 { margin: 5px 0 7px; font-size: 15px; }
+    .method-card .eq {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #ffd0b0;
+      background: rgba(15, 20, 26, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      padding: 7px 10px;
+      margin: 8px 0;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .method-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+    /* 4 Interactive Demos Grid */
+    .demos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+      gap: 14px;
+    }
+    .demo-card {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .demo-card .d-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #ff9c63;
+      font-weight: 700;
+    }
+    .demo-card h3 { margin: 0; font-size: 15px; line-height: 1.3; }
+    .demo-card p { margin: 0; font-size: 12.5px; color: var(--muted); flex: 1; }
+    .demo-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+    .mini-btn {
+      flex: 1;
+      min-width: 105px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+      transition: all 0.14s ease;
+    }
+    .mini-btn:hover { border-color: var(--accent); color: #ffab78; background: rgba(242, 108, 29, 0.12); }
+    .mini-btn.alt:hover { border-color: var(--cool); color: #93d6f5; background: rgba(82, 182, 230, 0.12); }
+
+    /* Verified Benchmark Table */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      background: rgba(15, 20, 26, 0.35);
+    }
+    tr:last-child td { border-bottom: none; }
+    td.num { font-family: var(--mono); color: var(--soft); white-space: nowrap; }
+    .tag-pass {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ok);
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      border-radius: 5px;
+      padding: 1px 6px;
+    }
+
+    /* Interactive Features Strip */
+    .features-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .feat-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .feat-item strong { display: block; color: var(--text); margin-bottom: 4px; font-size: 13px; }
+    .feat-item code {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--soft);
+      background: rgba(255, 255, 255, 0.07);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* BibTeX Collapsible Box */
+    .bibtex-box {
+      display: none;
+      margin: 14px auto 0;
+      max-width: 720px;
+      text-align: left;
+      background: #14181e;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #cbd5e1;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .bibtex-box.open { display: block; }
+
+    .footer {
+      margin-top: 46px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="paper-header">
+      <span class="review-pill">Interactive Supplementary Material · Double-Blind Review</span>
+      <h1>End-Effector-Rooted Floating-Base Dynamics for Whole-Body Control of Manipulators Under Unknown Base Motion</h1>
+      <p class="authors">Anonymous Authors</p>
+      <p class="venue">Under Double-Blind Peer Review · Client-Side 1 kHz WebAssembly Physics &amp; Control Benchmark</p>
+
+      <div class="action-bar">
+        <a class="pill-btn primary" href="./three/">Launch Live 1 kHz Simulator →</a>
+        <a class="pill-btn secondary" href="./three/?demo=5">Try 3.5 m Flexible Beam Coupling</a>
+        <a class="pill-btn secondary" href="./three/?demo=0&amp;base=wave">Test 110 s Sea-Wave Excitation</a>
+        <span class="pill-btn muted" title="Manuscript is currently under double-blind review">Paper PDF (Under Review)</span>
+        <button class="pill-btn" id="btnBibtex" type="button">BibTeX (Placeholder)</button>
+      </div>
+
+      <pre class="bibtex-box" id="bibtexBox">@article{anonymous2026eefloatingbase,
+  title   = {End-Effector-Rooted Floating-Base Dynamics for Whole-Body Control of Manipulators Under Unknown Base Motion},
+  author  = {Anonymous Authors},
+  journal = {Under Review},
+  year    = {2026},
+  note    = {Interactive 1 kHz WebAssembly supplementary material}
+}</pre>
+    </header>
+
+    <section class="authenticity">
+      <div class="auth-dot" aria-hidden="true"></div>
+      <p>
+        <strong>Live 1 kHz Physics &amp; Control in WebAssembly — Not Pre-Rendered Video.</strong>
+        Every scenario below runs the exact C++17 <strong>SE(3) Geometric Impedance</strong> controller,
+        20-variable <strong>ProxSuite 0.7.3 Base-Tracking QP</strong>, <strong>14→13 Schur-complement passive condensation</strong>,
+        and <strong>MuJoCo 4.0.1</strong> rigid/SDF contact engine inside a dedicated browser Web Worker at 1 kHz.
+        Reviewers can toggle the controller ON/OFF live, tune stiffness (K<sub>&lambda;,p</sub>, K<sub>&lambda;,R</sub>),
+        replay the 110 s recorded sea-wave spectrum, inject impulse disturbances, or steer the KUKA moving base in 6-DOF with keyboard controls.
+      </p>
+    </section>
+
+    <div class="sec-head">
+      <h2>Control Architecture Running in Browser</h2>
+      <span>Notation aligned with manuscript equations</span>
+    </div>
+    <section class="method-grid">
+      <div class="method-card">
+        <span class="m-tag">Stage 1 · Geometric Impedance</span>
+        <h3>SE(3) Logarithmic Error Law</h3>
+        <div class="eq">A<sub>&lambda;</sub>&lambda;&#776; + D<sub>&lambda;</sub>&lambda;&#775; + K<sub>&lambda;</sub>&lambda; = 0, &nbsp; &lambda; = [&eta;; &phi;]</div>
+        <p>Computes world-stabilized reference acceleration a<sub>B,ref</sub> from SE(3) pose error T<sub>e</sub> = T<sub>B</sub><sup>&minus;1</sup>T<sub>d</sub> with critically damped stiffness K<sub>&lambda;</sub> = diag(K<sub>&lambda;,p</sub>I<sub>3</sub>, K<sub>&lambda;,R</sub>I<sub>3</sub>) and optional wrist contact wrench compliance.</p>
+      </div>
+      <div class="method-card">
+        <span class="m-tag">Stage 2 · Dynamic Allocation</span>
+        <h3>20-Variable Base-Tracking QP</h3>
+        <div class="eq">M<sub>13</sub>a + h<sub>13</sub> = S<sup>T</sup>&tau; + f<sub>s</sub>, &nbsp; &tau;<sub>min</sub> &le; &tau;<sub>sdk</sub> &le; &tau;<sub>max</sub></div>
+        <p>Solves the floating-base dynamics constraint with CBF joint-limit bounds, torque slew limits, and causal supporting wrench f<sub>s</sub> via ProxSuite 0.7.3 at 1 kHz (with exact 14→13 Schur condensation for passive underactuated loads).</p>
+      </div>
+      <div class="method-card">
+        <span class="m-tag">Stage 3 · Macro–Mini Workcell</span>
+        <h3>Multi-Mode Base Disturbances</h3>
+        <div class="eq">Sinusoidal &nbsp;|&nbsp; 110 s Sea Wave &nbsp;|&nbsp; 6-DOF IK Teleop</div>
+        <p>Evaluates world-frame isolation on a KUKA carrier + 3030 aluminum mobile cart + Franka FR3 under 3-axis sine waves, a 110 s 4-band recorded sea-wave spectrum (0.19–0.95 Hz), or interactive 1 kHz 6-DOF keyboard steering.</p>
+      </div>
+    </section>
+
+    <div class="sec-head">
+      <h2>Interactive Floating-Base Benchmarks</h2>
+      <span>Click any condition to launch directly in the 3D simulator</span>
+    </div>
+    <section class="demos-grid">
+      <article class="demo-card">
+        <span class="d-num">DEMO 01 · BASE ISOLATION</span>
+        <h3>Brandy Cup Hold</h3>
+        <p>Flat-bottom tray holding a free 6-DOF 330 mL crystal wine glass under moving KUKA base. Monitors &Vert;p<sub>e</sub>&Vert;, &Vert;&phi;&Vert;, and glass tilt &psi;<sub>glass</sub>.</p>
+        <div class="demo-actions">
+          <a class="mini-btn" href="./three/?demo=0&amp;base=sine">Sinusoidal Base →</a>
+          <a class="mini-btn alt" href="./three/?demo=0&amp;base=wave">110 s Sea Wave →</a>
+        </div>
+      </article>
+
+      <article class="demo-card">
+        <span class="d-num">DEMO 02 · DYNAMIC TRACKING</span>
+        <h3>Figure-8 + Circle Tracking</h3>
+        <p>Continuous C<sup>2</sup> vertical YZ Figure-8 lemniscate + circle (or horizontal Line + XY Circle) tracked while carrying the free 6-DOF wine glass upright.</p>
+        <div class="demo-actions">
+          <a class="mini-btn" href="./three/?demo=1&amp;track=0">Figure-8 + Circle →</a>
+          <a class="mini-btn alt" href="./three/?demo=1&amp;track=1">Line + XY Circle →</a>
+        </div>
+      </article>
+
+      <article class="demo-card">
+        <span class="d-num">DEMO 03 · UNDERACTUATED</span>
+        <h3>Cart-Pole Swing-Up &amp; LQR</h3>
+        <p>Coaxial BRT38 encoder &amp; Ø8&times;250 mm aluminum pendulum on moving KUKA. 14→13 Schur condensation, energy swing-up, LQR balance &amp; impulse push recovery.</p>
+        <div class="demo-actions">
+          <a class="mini-btn" href="./three/?demo=2">Swing-Up &amp; Balance →</a>
+        </div>
+      </article>
+
+      <article class="demo-card">
+        <span class="d-num">DEMO 04 · CONTACT-RICH</span>
+        <h3>Lotus Petal SDF Docking</h3>
+        <p>Watertight 4-sector MuJoCo native SDF lotus petal mating on moving KUKA with contact-triggered compliant alignment and live 3D contact force vector F<sub>c</sub>.</p>
+        <div class="demo-actions">
+          <a class="mini-btn" href="./three/?demo=4&amp;dock=0">Aligned →</a>
+          <a class="mini-btn alt" href="./three/?demo=4&amp;dock=1">Yaw +5&deg; Offset →</a>
+        </div>
+      </article>
+
+      <article class="demo-card" style="border-top-color: var(--cool);">
+        <span class="d-num" style="color: var(--cool);">DEMO 05 · TWO-WAY COUPLING</span>
+        <h3>3.5 m Flexible Cantilever Beam</h3>
+        <p>8-segment 3D Euler–Bernoulli flexible beam (live E = 4–30 GPa) coupled two-way to FR3 link0 with live bending-stress heatmap |M(x)|, 5&times; deflection curve, base force &Delta;f<sub>s</sub>, and 1-click Fixed-Base baseline comparison.</p>
+        <div class="demo-actions">
+          <a class="mini-btn" href="./three/?demo=5&amp;beamMode=0">Self-Excited →</a>
+          <a class="mini-btn alt" href="./three/?demo=5&amp;beamMode=1">Tap &amp; Hold →</a>
+          <a class="mini-btn alt" href="./three/?demo=5&amp;beamMode=1&amp;disturber=1">Disturber →</a>
+        </div>
+      </article>
+    </section>
+
+    <div class="sec-head">
+      <h2>Verified Closed-Loop WASM Quantitative Results</h2>
+      <span>Measured directly on compiled <code>fr3_sim_wasm.wasm</code> (1 kHz control loop, Node.js runtime)</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark Scenario</th>
+            <th>Base Excitation</th>
+            <th>Control Step (RT Speed)</th>
+            <th>RMSE(p<sub>e</sub>)</th>
+            <th>&Vert;&tau;<sub>sdk</sub>&Vert;<sub>&infin;</sub></th>
+            <th>Key Task Outcome</th>
+          </tr>
+        </thead>
+        <tbody id="benchBody">
+          <tr>
+            <td><strong>1a. Brandy Cup Hold</strong> (10 s)</td>
+            <td>Sinusoidal (1.0x)</td>
+            <td class="num">91 &mu;s (11.1x RT)</td>
+            <td class="num">0.60 mm</td>
+            <td class="num">19.8 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> &psi;<sub>glass,max</sub> = 0.30&deg; · start 0.01 mm</td>
+          </tr>
+          <tr>
+            <td><strong>1b. Brandy Cup Hold</strong> (15 s)</td>
+            <td>Recorded Sea Wave (110 s)</td>
+            <td class="num">80 &mu;s (12.6x RT)</td>
+            <td class="num">1.17 mm</td>
+            <td class="num">18.7 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> &psi;<sub>glass,max</sub> = 0.66&deg; · 6-axis wave</td>
+          </tr>
+          <tr>
+            <td><strong>2a. Figure-8 + Circle</strong> (15 s)</td>
+            <td>Sinusoidal (1.0x)</td>
+            <td class="num">91 &mu;s (11.0x RT)</td>
+            <td class="num">0.57 mm</td>
+            <td class="num">22.7 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> &psi;<sub>glass,max</sub> = 0.32&deg; (YZ path)</td>
+          </tr>
+          <tr>
+            <td><strong>2b. Line + XY Circle</strong> (15 s)</td>
+            <td>Sinusoidal (1.0x)</td>
+            <td class="num">75 &mu;s (13.4x RT)</td>
+            <td class="num">0.55 mm</td>
+            <td class="num">22.2 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> &psi;<sub>glass,max</sub> = 0.33&deg; (XY path)</td>
+          </tr>
+          <tr>
+            <td><strong>3a. Cart-Pole Swing-Up</strong> (25 s)</td>
+            <td>Sinusoidal (0.3x)</td>
+            <td class="num">69 &mu;s (14.4x RT)</td>
+            <td class="num">0.34 mm</td>
+            <td class="num">21.1 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> Balanced 21.1 s (&theta; = &minus;0.1&deg;)</td>
+          </tr>
+          <tr>
+            <td><strong>3b. Cart-Pole Push Recovery</strong> (10 s)</td>
+            <td>Sinusoidal + 2.2 rad/s kick</td>
+            <td class="num">103 &mu;s (9.7x RT)</td>
+            <td class="num">0.31 mm</td>
+            <td class="num">23.4 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> Recovers to &theta; = &minus;0.1&deg; (6.9 s bal)</td>
+          </tr>
+          <tr>
+            <td><strong>4a. Lotus SDF Docking</strong> (12 s)</td>
+            <td>Aligned · Sinusoidal (0.4x)</td>
+            <td class="num">1100 &mu;s (0.91x RT)</td>
+            <td class="num">0.37 mm</td>
+            <td class="num">22.5 N&middot;m</td>
+            <td><span class="tag-pass">SEATED</span> &Delta;z = 0.02 mm · |F<sub>c</sub>|<sub>max</sub> = 2.34 N</td>
+          </tr>
+          <tr>
+            <td><strong>4b. Lotus SDF Docking</strong> (12 s)</td>
+            <td>Yaw +5&deg; · Sinusoidal (0.4x)</td>
+            <td class="num">1082 &mu;s (0.92x RT)</td>
+            <td class="num">0.56 mm</td>
+            <td class="num">20.4 N&middot;m</td>
+            <td><span class="tag-pass">SEATED</span> &Delta;z = 0.03 mm · |F<sub>c</sub>|<sub>max</sub> = 4.48 N</td>
+          </tr>
+          <tr>
+            <td><strong>5a. 3.5 m Beam Self-Excited (Ours)</strong> (12 s)</td>
+            <td>Single Arm · E = 8 GPa</td>
+            <td class="num">101 &mu;s (9.9x RT)</td>
+            <td class="num">0.05 mm</td>
+            <td class="num">23.8 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> Base sway 25.2 mm · &psi;<sub>glass</sub> = 0.12&deg; (vs Fixed-Base 128.1 mm)</td>
+          </tr>
+          <tr>
+            <td><strong>5b. 3.5 m Beam Strike (Ours)</strong> (8 s)</td>
+            <td>&minus;55 N Tip Impact · E = 12 GPa</td>
+            <td class="num">98 &mu;s (10.2x RT)</td>
+            <td class="num">0.07 mm</td>
+            <td class="num">22.6 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> Base sway 64.1 mm · &psi;<sub>glass</sub> = 0.10&deg; (vs Fixed-Base 151.3 mm)</td>
+          </tr>
+          <tr>
+            <td><strong>5c. 3.5 m Beam + Unknown Disturber</strong> (10 s)</td>
+            <td>3-DOF Arm at x = 2.19 m · E = 12 GPa</td>
+            <td class="num">99 &mu;s (10.2x RT)</td>
+            <td class="num">0.08 mm</td>
+            <td class="num">22.1 N&middot;m</td>
+            <td><span class="tag-pass">PASS</span> Base sway 54.5 mm · |&Delta;f<sub>s</sub>|<sub>max</sub> = 28.9 N · &psi;<sub>glass</sub> = 0.10&deg;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sec-head">
+      <h2>Interactive Controls for Reviewers</h2>
+      <span>Zero installation · Runs in any modern desktop browser (Chrome / Edge / Firefox / Safari)</span>
+    </div>
+    <section class="features-list">
+      <div class="feat-item">
+        <strong>6-DOF Keyboard Base Teleop</strong>
+        Press <code>Tab</code> to steer the KUKA moving base via 1 kHz DLS IK: <code>WASD/QE</code> translate, <code>IKJL/UO</code> rotate, <code>R</code> 2.5 s smooth home, <code>Space</code> brake.
+      </div>
+      <div class="feat-item">
+        <strong>3D Physical Overlays</strong>
+        Toggle world-frame SE(3) RGB pose triads (T<sub>B</sub> vs T<sub>d</sub>), desired trajectory trail, and live 3D docking contact force vector F<sub>c</sub>.
+      </div>
+      <div class="feat-item">
+        <strong>Live Controller Comparison</strong>
+        Uncheck <em>SE(3) + ProxQP Active</em> mid-run to compare directly against a baseline gravity-compensation controller under identical base motion.
+      </div>
+      <div class="feat-item">
+        <strong>Smooth Cameras &amp; Fullscreen</strong>
+        Switch smoothly across 7 studio camera views (Hero, Workcell, Detail, Mobile Base, EE, Side, Top) or press <code>H</code> to hide the telemetry sidebar.
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>MuJoCo 4.0.1 + ProxSuite 0.7.3 + Eigen 3.4 + Three.js PBR (Self-Hosted)</span>
+      <span>100% Client-Side WebAssembly · No Telemetry · No External CDN Dependencies</span>
+    </footer>
+  </div>
+  <script>
+    const btnBib = document.getElementById('btnBibtex');
+    const bibBox = document.getElementById('bibtexBox');
+    btnBib?.addEventListener('click', () => {
+      bibBox.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>
