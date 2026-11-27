@@ -51,17 +51,17 @@ const DEMO_META = {
   },
   2: {
     title: '3. Floating-Base Cart-Pole (BRT38)',
-    desc: 'Coaxial BRT38 encoder with Ø8×250 mm aluminum rod & brass coupler (J7 = +45°, 90° side mount clear of mocap markers & 0/721 collisions, swing along world +X). 14→13 Schur-complement condensation & LQR balance.',
+    desc: 'Fixed G00 wrist receiver and a 90° tool-side bracket with coaxial BRT38 encoder & Ø8×250 mm aluminum rod (J7 = +45°, fixed wrist IMU & 3 mocap spheres clear with 0/721 collisions, swing along world +X). Encoder side: two M4×30 button heads enter from G00 above; locknuts slide into the G01 side windows. The opposite two screws enter from below.',
     phaseNames: { 0: 'KICK', 1: 'SWING-UP', 2: 'LQR BALANCE' },
     paramsOverride: { kTrans: 160, kRot: 80, supportScale: 0.3 },
     cam: { pos: [-0.22, 0.02, 2.74], target: [-0.46, 1.18, 2.62], fov: 35 },
   },
   4: {
     title: '4. Lotus Petal SDF Contact Docking',
-    desc: 'Opposing H04 lotus petals on shared wrist receiver (J7 = +45°): watertight 4-sector MuJoCo native SDF contact mating on moving KUKA with contact-triggered compliant alignment & live 3D force vector.',
+    desc: 'Compact DN01 thin ring + HPS74A 6-axis F/T sensor + DN02 male lotus petal & J03A female station on fixed wrist receiver (J7 = +45°): direct CAD-mesh MuJoCo native SDF contact mating on moving KUKA with compliant alignment & live 3D force vector.',
     phaseNames: { 0: 'SETTLE', 1: 'APPROACH', 2: 'ALIGNING', 3: 'SEATED' },
     paramsOverride: { kTrans: 300, kRot: 300 },
-    cam: { pos: [0.12, 0.68, 2.70], target: [-0.46, 1.30, 2.60], fov: 30 },
+    cam: { pos: [0.12, 0.68, 2.68], target: [-0.46, 1.30, 2.57], fov: 30 },
   },
   5: {
     title: '5. 3.5 m Flexible Beam Coupling (Two-Way)',
@@ -753,7 +753,11 @@ function makeMaterial(rgba, opts = {}) {
     matName === 'revj_alloy' ||
     matName === 'revj_steel' ||
     matName === 'revj_brass' ||
-    matName === 'revj_petal';
+    matName === 'revj_petal' ||
+    matName === 'tool_alloy' ||
+    matName === 'tool_sensor' ||
+    matName === 'tool_cover' ||
+    matName === 'tool_fastener';
 
   if (matName === 'revj_glass') {
     return new THREE.MeshPhysicalMaterial({
@@ -1758,6 +1762,8 @@ function renderTaskSpecificControls() {
   const meta = DEMO_META[currentDemoId];
   document.getElementById('demoTitle').textContent = meta.title;
   document.getElementById('demoDesc').textContent = meta.desc;
+  const fastenersLink = document.getElementById('cartpoleFasteners');
+  if (fastenersLink) fastenersLink.hidden = currentDemoId !== 2;
 
   const isBeam = currentDemoId === 5;
   rowKukaMoving.classList.toggle('hidden', isBeam);

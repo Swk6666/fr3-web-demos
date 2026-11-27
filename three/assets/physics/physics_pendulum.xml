@@ -75,7 +75,6 @@
         </body>
       </body>
       <body name="revj_receiver" pos="0 0 .139" xyaxes=".707106781186548 .707106781186548 0 .707106781186548 -.707106781186548 0">
-        <inertial pos="-7.60642213865e-08 -7.95955728508e-08 0.0059293370369" mass="0.129050025752" fullinertia="4.97828828986e-05 0.000146835746218 0.000161530492865 -6.32539196043e-11 -1.30136154787e-10 2.45046358526e-10" />
         <site name="revj_mount_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="revj_exchange_site" pos="0 0 -0.01" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="imu_cad_site" pos="-0.0157500055188 -0.0135999947152 0.0293776331439" size=".0015" group="4" rgba="0 0 0 0" xyaxes="5.8877671481e-07 1 0 1 -5.88776714873e-07 0" />
@@ -84,25 +83,29 @@
         <site name="mocap_marker_2_site" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="mocap_marker_3_site" pos="-0.0259742565059 0.0612166499685 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="tracker" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" xyaxes="-1 0 0 0 1 0" />
-        <geom name="revj_receiver_collision" type="box" pos="0 0 -0.002" size="0.061 0.033 0.008" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
         <geom name="revj_mti_collision" type="box" pos="0 0.0004 0.02155" size="0.0158 0.0141 0.0065" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
-        <body name="revj_pendulum" quat="0.707106781187 0 0 0.707106781187">
-          <inertial pos="0.000109984233366 -0.0836699425253 -0.0425131839683" mass="0.526493175942" fullinertia="0.0015221203569 0.00050098351692 0.00143645292313 -2.90423077868e-06 1.69719138479e-06 -0.000271186136788" />
-          <geom name="revj_pendulum_bracket" type="box" pos="0 -0.082 -0.029" size="0.022 0.066 0.011" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
-          <geom name="revj_bearing_housing" type="box" pos="0 -0.132 -0.062" size="0.024 0.02 0.024" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
-          <geom name="brt38_housing_collision" type="cylinder" pos="0 -0.041 -0.062" size="0.0195 0.0195" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" xyaxes="1 0 0 0 0 -1" />
-          <site name="brt38_shaft_site" pos="0 -0.0605 -0.062" size=".0015" group="4" rgba="0 0 0 0" xyaxes="1 0 0 0 0 -1" />
-          <body name="task_mount" pos="0 -0.164 -0.062">
-            <site name="pendulum_pivot_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
-            <body name="pendulum">
-              <joint name="pendulum_hinge" type="hinge" axis="0 1 0" limited="false" armature="0" frictionloss="0" damping=".0001" />
-              <inertial pos="6.48415205664e-05 0.0209656814263 0.097287622151" mass="0.169171261301" fullinertia="0.00229907032071 0.00213026823131 0.00017740104104 1.67032401724e-07 1.05666171504e-06 0.000344399379683" />
-              <geom name="pendulum_rod" type="cylinder" pos="0 0 0.13" size="0.004 0.125" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" />
-              <geom name="pendulum_tip" type="cylinder" pos="0 0 0.247" size="0.012 0.008" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" />
-              <site name="pendulum_tip_site" pos="0 0 0.255" size=".0015" group="4" rgba="0 0 0 0" />
+        <inertial pos="-1.2615125383e-07 -1.11445226677e-07 0.00608447724911" mass="0.112412488387" fullinertia="4.50661334164e-05 0.000120434806598 0.000134235926069 -2.78474036084e-12 2.32193385047e-10 1.43835412165e-10" />
+        <body name="cartpole_adapter">
+          <body name="revj_pendulum" quat=".707106781186548 0 0 .707106781186548">
+            <inertial pos="0.000146877275007 -0.0858538956773 -0.0438383761864" mass="0.495858697465" fullinertia="0.00157989781724 0.000379069238135 0.00140092623108 -4.31594699006e-06 1.17404960313e-06 -0.000251971298759" />
+            <geom name="cartpole_mounting_foot" type="box" pos="0 0 -.014" size=".016 .062 .004" group="3" rgba="0 0 0 0" contype="1" conaffinity="2" mass="0" />
+            <geom name="revj_pendulum_bracket" type="box" pos="0 -0.082 -0.029" size="0.022 0.066 0.011" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+            <geom name="revj_bearing_housing" type="box" pos="0 -0.132 -0.062" size="0.024 0.02 0.024" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
+            <geom name="brt38_housing_collision" type="cylinder" pos="0 -0.041 -0.062" size="0.0195 0.0195" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" xyaxes="1 0 0 0 0 -1" />
+            <site name="brt38_shaft_site" pos="0 -0.0605 -0.062" size=".0015" group="4" rgba="0 0 0 0" xyaxes="1 0 0 0 0 -1" />
+            <body name="task_mount" pos="0 -0.164 -0.062">
+              <site name="pendulum_pivot_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
+              <body name="pendulum">
+                <joint name="pendulum_hinge" type="hinge" axis="0 1 0" limited="false" armature="0" frictionloss="0" damping=".0001" />
+                <inertial pos="6.48415205664e-05 0.0209656814263 0.097287622151" mass="0.169171261301" fullinertia="0.00229907032071 0.00213026823131 0.00017740104104 1.67032401724e-07 1.05666171504e-06 0.000344399379683" />
+                <geom name="pendulum_rod" type="cylinder" pos="0 0 0.13" size="0.004 0.125" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" />
+                <geom name="pendulum_tip" type="cylinder" pos="0 0 0.247" size="0.012 0.008" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" />
+                <site name="pendulum_tip_site" pos="0 0 0.255" size=".0015" group="4" rgba="0 0 0 0" />
+              </body>
             </body>
           </body>
         </body>
+        <geom name="revj_receiver_collision" type="box" pos="0 0 -0.002" size="0.061 0.033 0.008" group="3" mass="0" rgba="0 0 0 0" contype="1" conaffinity="2" />
       </body>
     </body>
     <body name="main_base" pos="0 0 0" quat="1 0 0 0">

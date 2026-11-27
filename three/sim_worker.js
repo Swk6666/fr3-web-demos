@@ -26,10 +26,8 @@ const PHYSICS_ASSETS = [
   'link5_coll.stl',
   'link6_coll.stl',
   'link7_coll.stl',
-  'smooth_sector0.stl',
-  'smooth_sector1.stl',
-  'smooth_sector2.stl',
-  'smooth_sector3.stl',
+  'revn_dn02.stl',
+  'revn_j03a.stl',
 ];
 
 const DEMO_XML = {

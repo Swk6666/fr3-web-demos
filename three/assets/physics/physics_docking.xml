@@ -26,10 +26,8 @@
     <mesh name="link5_coll" file="link5_coll.stl" />
     <mesh name="link6_coll" file="link6_coll.stl" />
     <mesh name="link7_coll" file="link7_coll.stl" />
-    <mesh name="lotus_s0" file="smooth_sector0.stl" />
-    <mesh name="lotus_s1" file="smooth_sector1.stl" />
-    <mesh name="lotus_s2" file="smooth_sector2.stl" />
-    <mesh name="lotus_s3" file="smooth_sector3.stl" />
+    <mesh name="revn_dn02" file="revn_dn02.stl" inertia="shell" />
+    <mesh name="revn_j03a" file="revn_j03a.stl" inertia="shell" />
   </asset>
   <worldbody>
     <geom name="floor" pos="0 0 0" size="29 20 .2" type="plane" contype="4" conaffinity="8" />
@@ -79,7 +77,6 @@
         </body>
       </body>
       <body name="revj_receiver" pos="0 0 .139" xyaxes=".707106781186548 .707106781186548 0 .707106781186548 -.707106781186548 0">
-        <inertial pos="-7.60642213865e-08 -7.95955728508e-08 0.0059293370369" mass="0.129050025752" fullinertia="4.97828828986e-05 0.000146835746218 0.000161530492865 -6.32539196043e-11 -1.30136154787e-10 2.45046358526e-10" />
         <site name="revj_mount_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="revj_exchange_site" pos="0 0 -0.01" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="imu_cad_site" pos="-0.0157500055188 -0.0135999947152 0.0293776331439" size=".0015" group="4" rgba="0 0 0 0" xyaxes="5.8877671481e-07 1 0 1 -5.88776714873e-07 0" />
@@ -88,20 +85,23 @@
         <site name="mocap_marker_2_site" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="mocap_marker_3_site" pos="-0.0259742565059 0.0612166499685 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
         <site name="tracker" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" xyaxes="-1 0 0 0 1 0" />
-        <geom name="revj_receiver_collision" type="box" pos="0 0 -0.002" size="0.061 0.033 0.008" group="3" mass="0" rgba="0 0 0 0" contype="4" conaffinity="8" />
         <geom name="revj_mti_collision" type="box" pos="0 0.0004 0.02155" size="0.0158 0.0141 0.0065" group="3" mass="0" rgba="0 0 0 0" contype="4" conaffinity="8" />
         <body name="revj_lotus">
-          <inertial pos="-7.47184861248e-05 6.75675395317e-07 -0.0207124531557" mass="0.200555368289" fullinertia="7.31552445442e-05 0.000154892171561 0.000200275223463 5.22461574842e-10 1.00042482035e-07 8.52098476977e-10" />
-          <site name="lotus_male_site" pos="0 0 -0.022" size=".0015" group="4" rgba="0 0 0 0" xyaxes="1 0 0 0 -1 0" />
-          <site name="lotus_station_target_site" pos="0 0 -0.0339" size=".0015" group="4" rgba="0 0 0 0" xyaxes="0.707106781187 -0.707106781187 0 0 0 -1" />
-          <body name="lotus_tool" pos="0 0 -0.022" xyaxes="1 0 0 0 -1 0">
-            <inertial pos="0 0 0" mass="1e-6" diaginertia="1e-9 1e-9 1e-9" />
-            <geom name="upper_sdf_0" type="sdf" mesh="lotus_s0" contype="2" conaffinity="1" group="3" rgba="0.72 0.59 0.41 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-            <geom name="upper_sdf_1" type="sdf" mesh="lotus_s1" contype="2" conaffinity="1" group="3" rgba="0.72 0.59 0.41 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-            <geom name="upper_sdf_2" type="sdf" mesh="lotus_s2" contype="2" conaffinity="1" group="3" rgba="0.72 0.59 0.41 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-            <geom name="upper_sdf_3" type="sdf" mesh="lotus_s3" contype="2" conaffinity="1" group="3" rgba="0.72 0.59 0.41 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
+          <inertial mass="0.255431540082" pos="7.67841616717e-06 -4.2673689403e-05 -0.0254823819236" fullinertia="0.000120881581675 0.00018538233819 0.00026592494519 5.55868500626e-08 3.39121955057e-08 -4.44164553926e-08" />
+          <geom name="hps74_housing_collision" type="cylinder" pos="0 0 -.0289" size=".037 .0139" group="3" mass="0" rgba="0 0 0 0" contype="4" conaffinity="8" />
+          <body name="hps74_load">
+            <inertial mass="0.108983756278" pos="-9.87784042136e-05 0.000105627946347 -0.0456503129869" fullinertia="3.84457056459e-05 3.84606583171e-05 6.56398171639e-05 1.03176742715e-08 5.47636496604e-08 -5.99783143822e-08" />
+            <site name="hps74_measurement_site" pos="0 0 -.0436" quat="0 1 0 0" size=".001" rgba="0 0 0 0" group="4" />
+            <site name="lotus_male_site" pos="0 0 -.0476" size=".0015" group="4" rgba="0 0 0 0" xyaxes="1 0 0 0 -1 0" />
+            <site name="lotus_station_target_site" pos="0 0 -.0595" size=".0015" group="4" rgba="0 0 0 0" xyaxes="0.707106781187 -0.707106781187 0 0 0 -1" />
+            <body name="lotus_tool" pos="0 0 -.0476" xyaxes="1 0 0 0 -1 0">
+              <inertial pos="0 0 0" mass="1e-6" diaginertia="1e-9 1e-9 1e-9" />
+              <geom name="upper_sdf_0" type="sdf" mesh="revn_dn02" contype="2" conaffinity="1" group="3" rgba="0.72 0.59 0.41 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" mass="0" pos="0 -0 -0.0476" quat="0 1 0 0" />
+            </body>
           </body>
         </body>
+        <inertial mass="0.135390480637" pos="0 0 0.00419841088658" fullinertia="5.20515880383e-05 0.000178447516517 0.000188456079406 0 0 0" />
+        <geom name="revj_receiver_collision" type="box" pos="0 0 -0.002" size="0.061 0.033 0.008" group="3" mass="0" rgba="0 0 0 0" contype="4" conaffinity="8" />
       </body>
     </body>
     <body name="main_base" pos="0 0 0" quat="1 0 0 0">
@@ -172,12 +172,9 @@
         </body>
       </body>
     </body>
-    <body name="lotus_fixture" pos="-0.457893225127 1.30075637153 2.54004675408" quat="-0.382866731703 0.000679486633286 9.44158262331e-05 0.923803331418">
-      <geom name="lower_sdf_0" type="sdf" mesh="lotus_s0" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-      <geom name="lower_sdf_1" type="sdf" mesh="lotus_s1" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-      <geom name="lower_sdf_2" type="sdf" mesh="lotus_s2" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-      <geom name="lower_sdf_3" type="sdf" mesh="lotus_s3" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
-      <geom name="fixture_pedestal" type="cylinder" pos="0 0 -0.035" size="0.055 0.031" rgba="0.22 0.27 0.32 1" contype="0" conaffinity="0" />
+    <body name="lotus_fixture" pos="-0.45792351317 1.30073858596 2.51444677818" quat="-0.382866731703 0.000679486633286 9.44158262331e-05 0.923803331418">
+      <geom name="fixture_pedestal" type="cylinder" pos="0 0 -.04579" size="0.055 0.031" rgba="0.22 0.27 0.32 1" contype="0" conaffinity="0" />
+      <geom name="lower_sdf_0" type="sdf" mesh="revn_j03a" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" mass="0" pos="0 0 0.07111" quat="0.923879532511 0 0 0.382683432365" />
     </body>
   </worldbody>
   <actuator>

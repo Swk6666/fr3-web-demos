@@ -396,7 +396,7 @@
       <article class="demo-card">
         <span class="d-num">DEMO 03 · UNDERACTUATED</span>
         <h3>Cart-Pole Swing-Up &amp; LQR</h3>
-        <p>Coaxial BRT38 encoder &amp; Ø8&times;250 mm aluminum pendulum on moving KUKA. 14→13 Schur condensation, energy swing-up, LQR balance &amp; impulse push recovery.</p>
+        <p>Fixed G00 receiver and a 90&deg; side-mounted tool bracket with coaxial BRT38 encoder &amp; Ø8&times;250 mm aluminum pendulum (clear of fixed IMU &amp; 3 mocap spheres). 14→13 Schur condensation, energy swing-up, LQR balance &amp; impulse push recovery.</p>
         <div class="demo-actions">
           <a class="mini-btn" href="./three/?demo=2">Swing-Up &amp; Balance →</a>
         </div>
@@ -405,7 +405,7 @@
       <article class="demo-card">
         <span class="d-num">DEMO 04 · CONTACT-RICH</span>
         <h3>Lotus Petal SDF Docking</h3>
-        <p>Watertight 4-sector MuJoCo native SDF lotus petal mating on moving KUKA with contact-triggered compliant alignment and live 3D contact force vector F<sub>c</sub>.</p>
+        <p>Compact DN01 ring + HPS74A 6-axis F/T sensor + DN02/J03A direct CAD-mesh MuJoCo native SDF lotus mating on moving KUKA with contact-triggered compliant alignment and live 3D contact force vector F<sub>c</sub>.</p>
         <div class="demo-actions">
           <a class="mini-btn" href="./three/?demo=4&amp;dock=0">Aligned →</a>
           <a class="mini-btn alt" href="./three/?demo=4&amp;dock=1">Yaw +5&deg; Offset →</a>
@@ -476,34 +476,34 @@
           <tr>
             <td><strong>3a. Cart-Pole Swing-Up</strong> (25 s)</td>
             <td>Sinusoidal (0.3x)</td>
-            <td class="num">69 &mu;s (14.4x RT)</td>
-            <td class="num">0.34 mm</td>
-            <td class="num">21.1 N&middot;m</td>
+            <td class="num">63 &mu;s (15.8x RT)</td>
+            <td class="num">0.75 mm</td>
+            <td class="num">20.7 N&middot;m</td>
             <td><span class="tag-pass">PASS</span> Balanced 21.1 s (&theta; = &minus;0.1&deg;)</td>
           </tr>
           <tr>
             <td><strong>3b. Cart-Pole Push Recovery</strong> (10 s)</td>
             <td>Sinusoidal + 2.2 rad/s kick</td>
-            <td class="num">103 &mu;s (9.7x RT)</td>
-            <td class="num">0.31 mm</td>
-            <td class="num">23.4 N&middot;m</td>
+            <td class="num">58 &mu;s (17.3x RT)</td>
+            <td class="num">0.52 mm</td>
+            <td class="num">23.0 N&middot;m</td>
             <td><span class="tag-pass">PASS</span> Recovers to &theta; = &minus;0.1&deg; (6.9 s bal)</td>
           </tr>
           <tr>
             <td><strong>4a. Lotus SDF Docking</strong> (12 s)</td>
             <td>Aligned · Sinusoidal (0.4x)</td>
-            <td class="num">1100 &mu;s (0.91x RT)</td>
-            <td class="num">0.37 mm</td>
-            <td class="num">22.5 N&middot;m</td>
-            <td><span class="tag-pass">SEATED</span> &Delta;z = 0.02 mm · |F<sub>c</sub>|<sub>max</sub> = 2.34 N</td>
+            <td class="num">114 &mu;s (8.8x RT)</td>
+            <td class="num">0.24 mm</td>
+            <td class="num">21.2 N&middot;m</td>
+            <td><span class="tag-pass">SEATED</span> &Delta;z = &minus;0.20 mm · |F<sub>c</sub>|<sub>max</sub> = 2.15 N</td>
           </tr>
           <tr>
             <td><strong>4b. Lotus SDF Docking</strong> (12 s)</td>
             <td>Yaw +5&deg; · Sinusoidal (0.4x)</td>
-            <td class="num">1082 &mu;s (0.92x RT)</td>
-            <td class="num">0.56 mm</td>
-            <td class="num">20.4 N&middot;m</td>
-            <td><span class="tag-pass">SEATED</span> &Delta;z = 0.03 mm · |F<sub>c</sub>|<sub>max</sub> = 4.48 N</td>
+            <td class="num">110 &mu;s (9.1x RT)</td>
+            <td class="num">0.44 mm</td>
+            <td class="num">21.3 N&middot;m</td>
+            <td><span class="tag-pass">SEATED</span> &Delta;z = &minus;0.21 mm · |F<sub>c</sub>|<sub>max</sub> = 4.28 N</td>
           </tr>
           <tr>
             <td><strong>5a. 3.5 m Beam Self-Excited (Ours)</strong> (12 s)</td>
