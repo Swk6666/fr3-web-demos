@@ -172,7 +172,7 @@
         </body>
       </body>
     </body>
-    <body name="lotus_fixture" pos="-0.445516220918 1.30100695858 2.54901483179" quat="0.999999951221 4.12658985352e-14 5.80711652486e-13 0.000312343022251">
+    <body name="lotus_fixture" pos="-0.457893225127 1.30075637153 2.54004675408" quat="-0.382866731703 0.000679486633286 9.44158262331e-05 0.923803331418">
       <geom name="lower_sdf_0" type="sdf" mesh="lotus_s0" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
       <geom name="lower_sdf_1" type="sdf" mesh="lotus_s1" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />
       <geom name="lower_sdf_2" type="sdf" mesh="lotus_s2" contype="1" conaffinity="2" group="3" rgba="0.18 0.48 0.80 0" condim="3" friction="0.35 0.005 0.0001" solref="0.01 1" />

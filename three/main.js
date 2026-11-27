@@ -14,7 +14,7 @@ const CAMERA_PRESETS = {
   workcell: { pos: [5.7134, -3.865, 4.7803], target: [-0.808, 0.21, 1.5161], fov: 27 },
   detail: { pos: [2.0496, -0.8208, 2.7281], target: [-0.8747, 0.3607, 2.0577], fov: 22 },
   base: { pos: [-0.0551, 0.1606, 2.2004], target: [-0.8035, 1.2964, 1.7857], fov: 33 },
-  ee: { pos: [0.15, 0.72, 2.70], target: [-0.45, 1.30, 2.59], fov: 30 },
+  ee: { pos: [0.12, 0.72, 2.68], target: [-0.46, 1.30, 2.58], fov: 30 },
   side: { pos: [-0.45, -1.65, 2.41], target: [-0.61, 1.15, 2.14], fov: 32 },
   top: { pos: [-0.66, 0.85, 5.20], target: [-0.66, 0.85, 1.80], fov: 34 },
 };
@@ -37,31 +37,31 @@ function getCameraPresetsForDemo(demoId) {
 const DEMO_META = {
   0: {
     title: '1. Floating-Base Brandy Cup Hold',
-    desc: '3030 aluminum mobile base & Franka Control cabinet + flat-bottom brandy cradle with free 6-DOF 330 mL wine glass, wrist IMU & 3 mocap spheres (J7 = −90°). 1 kHz SE(3) + ProxQP rejects KUKA sinusoidal or 110 s recorded sea-wave disturbances.',
+    desc: '3030 aluminum mobile base & Franka Control cabinet + flat-bottom brandy cradle with free 6-DOF 330 mL wine glass, wrist IMU & 3 mocap spheres (J7 = +45°). 1 kHz SE(3) + ProxQP rejects KUKA sinusoidal or 110 s recorded sea-wave disturbances.',
     phaseNames: { 0: 'HOLDING' },
     paramsOverride: { kTrans: 200, kRot: 200 },
     cam: { ...CAMERA_PRESETS.hero, preset: 'hero' },
   },
   1: {
     title: '2. Trajectory Tracking (Brandy Cup)',
-    desc: 'Continuous C² vertical YZ Figure-8 + Circle or horizontal Line + XY Circle tracked at tray_surface_site (J7 = −90°) while the free 6-DOF 330 mL brandy wine glass rides upright on the moving support.',
+    desc: 'Continuous C² vertical YZ Figure-8 + Circle or horizontal Line + XY Circle tracked at tray_surface_site (J7 = +45°) while the free 6-DOF 330 mL brandy wine glass rides upright on the moving support.',
     phaseNames: { 0: 'TRACKING' },
     paramsOverride: { kTrans: 200, kRot: 200, trackingMode: 0 },
-    cam: { pos: [0.77, 0.48, 2.70], target: [-0.45, 1.28, 2.48], fov: 30 },
+    cam: { pos: [0.68, 0.52, 2.70], target: [-0.46, 1.28, 2.48], fov: 30 },
   },
   2: {
     title: '3. Floating-Base Cart-Pole (BRT38)',
-    desc: 'Coaxial BRT38 encoder with Ø8×250 mm aluminum rod & brass coupler (J7 = −90°, collision-free). 14→13 Schur-complement passive condensation, energy-pumping swing-up & 4-state LQR upright balance.',
+    desc: 'Coaxial BRT38 encoder with Ø8×250 mm aluminum rod & brass coupler (J7 = +45°, 90° side mount clear of mocap markers & 0/721 collisions, swing along world +X). 14→13 Schur-complement condensation & LQR balance.',
     phaseNames: { 0: 'KICK', 1: 'SWING-UP', 2: 'LQR BALANCE' },
     paramsOverride: { kTrans: 160, kRot: 80, supportScale: 0.3 },
-    cam: { pos: [0.49, 0.68, 2.74], target: [-0.37, 1.22, 2.64], fov: 35 },
+    cam: { pos: [-0.22, 0.02, 2.74], target: [-0.46, 1.18, 2.62], fov: 35 },
   },
   4: {
     title: '4. Lotus Petal SDF Contact Docking',
-    desc: 'Opposing H04 lotus petals on shared wrist receiver (J7 = −90°): watertight 4-sector MuJoCo native SDF contact mating on moving KUKA with contact-triggered compliant alignment & live 3D force vector.',
+    desc: 'Opposing H04 lotus petals on shared wrist receiver (J7 = +45°): watertight 4-sector MuJoCo native SDF contact mating on moving KUKA with contact-triggered compliant alignment & live 3D force vector.',
     phaseNames: { 0: 'SETTLE', 1: 'APPROACH', 2: 'ALIGNING', 3: 'SEATED' },
     paramsOverride: { kTrans: 300, kRot: 300 },
-    cam: { pos: [0.14, 0.68, 2.70], target: [-0.45, 1.30, 2.60], fov: 30 },
+    cam: { pos: [0.12, 0.68, 2.70], target: [-0.46, 1.30, 2.60], fov: 30 },
   },
   5: {
     title: '5. 3.5 m Flexible Beam Coupling (Two-Way)',
