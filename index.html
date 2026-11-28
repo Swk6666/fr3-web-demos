@@ -186,6 +186,19 @@
       background: var(--page); color: var(--ink);
     }
 
+    /* Real robot (placeholder until the videos are added) */
+    #real { padding-bottom: 0; }
+    .placeholder {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      margin-top: 44px; border-radius: 28px; aspect-ratio: 8 / 3; background: var(--band);
+      border: 1px dashed var(--hair); text-align: center;
+    }
+    .placeholder p { margin: 0; font: 600 24px/1.17 var(--display); letter-spacing: -.015em; color: var(--faint); }
+    .soon-tag {
+      padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      background: var(--page); color: var(--ink2); box-shadow: 0 0 0 1px rgba(0, 0, 0, .05);
+    }
+
     /* Paper */
     .paper { text-align: center; }
     .paper h2 { font: 600 40px/1.1 var(--display); letter-spacing: -.01em; margin: 0 auto; max-width: 900px; text-wrap: balance; }
@@ -220,7 +233,7 @@
       .hero-sub { font-size: 19px; }
       .hl-head { font-size: 36px; line-height: 1.11; }
       .lede { font-size: 19px; }
-      .compare { border-radius: 18px; aspect-ratio: 16 / 9; }
+      .compare, .placeholder { border-radius: 18px; aspect-ratio: 16 / 9; }
       .tag { top: 10px; font-size: 11px; padding: 4px 9px; }
       .tag.ours { left: 10px; }
       .tag.base { left: calc(50% + 10px); }
@@ -242,6 +255,7 @@
       <button class="pill out" id="exploreBtn" type="button" aria-expanded="false" aria-controls="exploreMenu">Explore</button>
       <div class="explore-menu" id="exploreMenu" hidden>
         <a href="#demos">Demos</a>
+        <a href="#real">Real robot</a>
         <a href="#method">How it works</a>
         <a href="#browser">In your browser</a>
         <a href="#faq">Questions</a>
@@ -309,6 +323,17 @@
       <div class="wrap"><a class="lnk rv" href="./three/">Open the simulator ›</a></div>
     </section>
 
+    <section class="sec" id="real">
+      <div class="wrap">
+        <h2 class="hl-head rv">On the real robot.</h2>
+        <p class="lede rv">Videos of the real-robot experiments will be added here.</p>
+        <div class="placeholder rv" role="note">
+          <span class="soon-tag">Coming soon</span>
+          <p>Real-robot videos</p>
+        </div>
+      </div>
+    </section>
+
     <section class="sec" id="method">
       <div class="wrap">
         <h2 class="hl-head rv">How it works.</h2>
@@ -359,9 +384,9 @@
           <details><summary>What is the fixed-base controller in the comparison?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="ans"><p>A conventional controller that <b>assumes the base is still</b>. In the simulator, switch the controller to Fixed-base, or turn on the fixed-base ghost to run it under the same base motion next to ours.</p></div></details>
           <details><summary>What runs in the browser?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-            <div class="ans"><p>MuJoCo and the controller, both compiled from C++ to WebAssembly. In Still Wine, Tracking, Docking and Flexible Beam, <b>the low level is the same C++ code as our offline simulation</b>: the learned friction model, the momentum observer, and an arm with elastic joints and joint friction. Cart-Pole still uses a rigid-arm scene.</p></div></details>
+            <div class="ans"><p>MuJoCo and the controller, both compiled from C++ to WebAssembly. In all five demos, <b>the low level is the same C++ code as our offline simulation</b>: the learned friction model, the momentum observer, and an arm with elastic joints and joint friction.</p></div></details>
           <details><summary>Are these real-robot results?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-            <div class="ans"><p>No. <b>Everything on this site is simulation.</b> The error readout comes from the simulated run in your tab, and contact makes long runs sensitive to tiny numerical differences, so it can differ slightly between devices. Real-robot experiments will be reported in the paper.</p></div></details>
+            <div class="ans"><p>No. <b>Everything on this site is simulation.</b> The error readout comes from the simulated run in your tab, and contact makes long runs sensitive to tiny numerical differences, so it can differ slightly between devices. Real-robot experiments will be reported in the paper, and their videos will be added <a href="#real">on this page</a>.</p></div></details>
           <details><summary>Is the wine simulated?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="ans"><p>The glass is a free body that rests on the tray through contact, so <b>it can slide and tip</b>. The wine surface follows a first-mode sloshing model driven by the glass motion; it is a visual model and does not push back on the glass.</p></div></details>
           <details><summary>Can I disturb the robot?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
@@ -383,6 +408,7 @@
           <a class="btn solid" href="./three/">Live demo</a>
           <span class="btn soon" title="Manuscript in preparation">Paper <span class="note">coming soon</span></span>
           <span class="btn soon" title="Code release after review">Code <span class="note">after review</span></span>
+          <span class="btn soon" title="Citation available once the manuscript is public">BibTeX <span class="note">coming soon</span></span>
         </div>
       </div>
     </section>
