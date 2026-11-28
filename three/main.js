@@ -52,7 +52,8 @@ const DEMO_META = {
   2: {
     title: 'Cart-Pole',
     desc: 'A passive pendulum on the end effector is swung up and balanced while the base moves.',
-    phaseNames: { 0: 'Kick', 1: 'Swing-up', 2: 'Balancing' },
+    // 3: the aligned low level's warm-up, the pendulum held by the hand (cartpole_kuka warmup_s).
+    phaseNames: { 0: 'Kick', 1: 'Swing-up', 2: 'Balancing', 3: 'Held' },
     paramsOverride: { kTrans: 160, kRot: 80, supportScale: 0.3 },
     cam: { pos: [-0.22, 0.02, 2.74], target: [-0.46, 1.18, 2.62], fov: 35 },
   },
@@ -274,6 +275,8 @@ function updateDownloadProgress(key, loaded, total) {
 // Loaded visual GLB geometry library + body manifest + Studio IBL
 const glbGeometries = new Map();
 let visualManifest = {};
+// Bodies the aligned scenes rename keep the web visuals (web_cartpole.py: pendulum -> pendulum_rotor).
+const VISUAL_ALIAS = { pendulum_rotor: 'pendulum' };
 let assetsReady = false;
 let assetsPromise = null;
 
@@ -864,7 +867,7 @@ function buildSceneMeshes(bodyNames, geoms, refPath, bodyRootIds = []) {
     const bname = bodyNames[b];
     const g = new THREE.Group();
     g.name = bname;
-    const visList = visualManifest[bname];
+    const visList = visualManifest[bname] ?? visualManifest[VISUAL_ALIAS[bname]];
     if (visList) {
       for (const item of visList) {
         if (item.demos && !item.demos.includes(currentDemoId)) continue;

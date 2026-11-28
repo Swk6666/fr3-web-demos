@@ -23,7 +23,9 @@ let loadedAssets = false;
 let currentDemoId = 0;
 let currentLoadId = 0;
 // Demos on the codex/sim-accuracy low level -> exported scene (export_sim_scene.py SCENES).
-const ALIGNED_DEMOS = new Map([[0, 'kuka'], [1, 'kuka'], [4, 'docking'], [5, 'beam']]);
+const ALIGNED_DEMOS = new Map([[0, 'kuka'], [1, 'kuka'], [2, 'cartpole'], [4, 'docking'], [5, 'beam']]);
+// Bodies the aligned scenes rename (web_cartpole.py: the rotor is pendulum_rotor there).
+const ALIGNED_BODY_ALIAS = { pendulum: 'pendulum_rotor' };
 const alignedScenes = new Map();   // scene -> { xml, document } once its assets are in the session
 let currentAligned = false;
 // Ghost body i -> main body index by name (the aligned plant has extra rotor bodies).
@@ -194,7 +196,10 @@ function syncGhostScene() {
   ghost.loadScene(DEMO_XML[currentDemoId] ?? DEMO_XML[0], currentDemoId);
   const mainNames = session.getBodyNames();
   const ghostNames = ghost.getBodyNames();
-  ghostIndex = ghostNames.map((name) => mainNames.indexOf(name));
+  ghostIndex = ghostNames.map((name) => {
+    const i = mainNames.indexOf(name);
+    return i >= 0 || !ALIGNED_BODY_ALIAS[name] ? i : mainNames.indexOf(ALIGNED_BODY_ALIAS[name]);
+  });
   const p = session.getParams();
   p.controllerEnabled = false;
   ghost.setParams(p);

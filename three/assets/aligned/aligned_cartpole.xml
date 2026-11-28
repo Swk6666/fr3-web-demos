@@ -1,0 +1,200 @@
+<mujoco model="Web Cart-Pole (BRT38) on the KUKA iiwa, sim-accuracy cartpole_kuka plant">
+  <compiler angle="radian" autolimits="true" />
+  <option timestep="0.001" integrator="discrete" gravity="0 0 -9.81" jacobian="dense">
+    <flag filterparent="disable" />
+  </option>
+  <default>
+    <geom contype="0" conaffinity="0" />
+  </default>
+  <default>
+    <default class="fr3">
+      <joint damping="0.21" armature="0.195" frictionloss="1.137" />
+      <position inheritrange="1" />
+      <default class="collision">
+        <geom type="mesh" group="3" mass="0" density="0" contype="0" conaffinity="0" />
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4" />
+    </default>
+  </default>
+  <asset>
+    <mesh name="link0_coll" file="link0_coll.stl" />
+    <mesh name="link1_coll" file="link1_coll.stl" />
+    <mesh name="link2_coll" file="link2_coll.stl" />
+    <mesh name="link3_coll" file="link3_coll.stl" />
+    <mesh name="link4_coll" file="link4_coll.stl" />
+    <mesh name="link5_coll" file="link5_coll.stl" />
+    <mesh name="link6_coll" file="link6_coll.stl" />
+    <mesh name="link7_coll" file="link7_coll.stl" />
+  </asset>
+  <worldbody>
+    <geom name="floor" pos="0 0 0" size="29 20 .2" type="plane" contype="0" conaffinity="0" />
+    <body name="link7" pos="0 0 0" quat="1 0 0 0">
+      <site name="pendulum_pivot_site" pos="0.11596551211459379 0.11596551211459379 0.201" quat="0.0 0.9238795325112867 -0.3826834323650897 0.0" size=".0015" group="4" rgba="0 0 0 0" /><freejoint name="freejoint" />
+      <inertial pos="0.00452258 0.00862619 -0.0161633" quat="0.727579 0.0978688 -0.24906 0.63168" mass="0.627143" diaginertia="0.000223836 0.000223642 5.64132e-07" />
+      <geom name="fr3_link7_collision" class="collision" mesh="link7_coll" contype="0" conaffinity="0" />
+      <site name="link7_site" />
+      <site name="attachment_site" pos="0 0 0.107" />
+      <body name="link6" pos="-0.088 0 0" quat="0.70710678 -0.70710678 0 0">
+        <inertial pos="0.0597131 -0.0410295 -0.0101693" quat="0.621301 0.552665 0.510011 0.220081" mass="1.81704" diaginertia="0.0175039 0.0161123 0.00193529" />
+        <joint name="joint7" pos="0.088 0 0" axis="0 1 0" range="-3.0159 3.0159" actuatorfrcrange="-12 12" armature="0" frictionloss="0" damping="0" />
+        <geom name="fr3_link6_collision" class="collision" mesh="link6_coll" contype="0" conaffinity="0" />
+        <body name="link5" pos="0 0 0" quat="0.70710678 -0.70710678 0 0">
+          <inertial pos="-0.00160396 0.0292536 -0.0972966" quat="0.919031 0.125604 0.0751531 -0.366003" mass="2.32712" diaginertia="0.0579335 0.0449144 0.0130634" />
+          <joint name="joint6" pos="0 0 0" axis="0 1 0" range="0.5445 4.5169" actuatorfrcrange="-12 12" damping="0" armature="0" frictionloss="0" />
+          <geom name="fr3_link5_collision" class="collision" mesh="link5_coll" contype="0" conaffinity="0" />
+          <body name="link4" pos="0.0825 0 -0.384" quat="0.70710678 0.70710678 0 0">
+            <inertial pos="-0.0459101 0.0630493 -0.00851879" quat="0.438018 0.803311 0.00937812 0.403414" mass="2.6156" diaginertia="0.05139 0.0372717 0.0160047" />
+            <joint name="joint5" pos="-0.0825 0.384 0" axis="0 -1 0" range="-2.8065 2.8065" actuatorfrcrange="-12 12" armature="0" frictionloss="0" damping="0" />
+            <geom name="fr3_link4_collision" class="collision" mesh="link4_coll" contype="0" conaffinity="0" />
+            <body name="link3" pos="-0.0825 0 0" quat="0.70710678 -0.70710678 0 0">
+              <inertial pos="0.0407016 -0.00482006 -0.0289731" quat="0.921025 -0.244161 0.155272 0.260745" mass="2.2449" diaginertia="0.0267409 0.0189869 0.0171587" />
+              <joint name="joint4" pos="0.0825 0 0" axis="0 1 0" range="-3.0421 -0.1518" actuatorfrcrange="-87 87" damping="0" armature="0" frictionloss="0" />
+              <geom name="fr3_link3_collision" class="collision" mesh="link3_coll" contype="0" conaffinity="0" />
+              <body name="link2" pos="0 0 -0.316" quat="0.70710678 -0.70710678 0 0">
+                <inertial pos="0.00318289 -0.0743222 0.00881461" quat="0.502599 0.584437 -0.465998 0.434366" mass="2.93554" diaginertia="0.0629567 0.0411924 0.0246371" />
+                <joint name="joint3" pos="0 -0.316 0" axis="0 1 0" range="-2.9007 2.9007" actuatorfrcrange="-87 87" damping="0" armature="0" frictionloss="0" />
+                <geom name="fr3_link2_collision" class="collision" mesh="link2_coll" contype="0" conaffinity="0" />
+                <body name="link1" pos="0 0 0" quat="0.70710678 0.70710678 0 0">
+                  <inertial pos="4.128e-07 -0.0181251 -0.0386036" quat="0.998098 -0.0605364 0.00380499 0.0110109" mass="2.92747" diaginertia="0.0239286 0.0227246 0.00610634" />
+                  <joint name="joint2" pos="0 0 0" axis="0 -1 0" range="-1.7837 1.7837" actuatorfrcrange="-87 87" damping="0" armature="0" frictionloss="0" />
+                  <geom name="fr3_link1_collision" class="collision" mesh="link1_coll" contype="0" conaffinity="0" />
+                  <body name="link0" pos="0 0 -0.333" quat="1 0 0 0">
+                    <joint name="joint1" pos="0 0 0.333" axis="0 0 -1" range="-2.7437 2.7437" actuatorfrcrange="-87 87" damping="0" armature="0" frictionloss="0" />
+                    <inertial pos="-0.0172 0.0004 0.0745" mass="2.3966" diaginertia="0.009 0.0115 0.0085" />
+                    <geom name="fr3_link0_collision" mesh="link0_coll" class="collision" contype="0" conaffinity="0" />
+                    <body name="transition_plate" pos="-0.0399996526 0.0000003614 -0.0299987132" quat="0.50000404 0.49999988 0.49999433 0.50000175">
+                      <inertial mass="1" pos="0 0 0" diaginertia="0.01 0.01 0.01" />
+                      <site name="transition_plate_site" />
+                    </body>
+                  <body name="rotor1" pos="0 0 0.333"><joint name="motor1" type="hinge" axis="-0.0 -0.0 1.0" armature="0.0975" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+                <body name="rotor2" pos="0 0 0"><joint name="motor2" type="hinge" axis="-0.0 1.0 -0.0" armature="0.0975" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+              <body name="rotor3" pos="0 -0.316 0"><joint name="motor3" type="hinge" axis="-0.0 -1.0 -0.0" armature="0.0975" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+            <body name="rotor4" pos="0.0825 0 0"><joint name="motor4" type="hinge" axis="-0.0 -1.0 -0.0" armature="0.0975" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+          <body name="rotor5" pos="-0.0825 0.384 0"><joint name="motor5" type="hinge" axis="-0.0 1.0 -0.0" armature="0.037" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+        <body name="rotor6" pos="0 0 0"><joint name="motor6" type="hinge" axis="-0.0 -1.0 -0.0" armature="0.037" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+      <body name="rotor7" pos="0.088 0 0"><joint name="motor7" type="hinge" axis="-0.0 -1.0 -0.0" armature="0.037" limited="false" frictionloss="0" damping="0" /><inertial pos="0 0 0" mass="1e-6" diaginertia="1e-10 1e-10 1e-10" /></body></body>
+      <body name="revj_receiver" pos="0 0 .139" xyaxes=".707106781186548 .707106781186548 0 .707106781186548 -.707106781186548 0">
+        <site name="revj_mount_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="revj_exchange_site" pos="0 0 -0.01" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="imu_cad_site" pos="-0.0157500055188 -0.0135999947152 0.0293776331439" size=".0015" group="4" rgba="0 0 0 0" xyaxes="5.8877671481e-07 1 0 1 -5.88776714873e-07 0" />
+        <site name="imu_measurement_site" pos="0.00770017787071 0.00679999147602 0.02224" size=".0015" group="4" rgba="0 0 0 0" xyaxes="5.8877671481e-07 1 0 1 -5.88776714873e-07 0" />
+        <site name="mocap_marker_1_site" pos="0.0250375607644 0.0609208533852 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="mocap_marker_2_site" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="mocap_marker_3_site" pos="-0.0259742565059 0.0612166499685 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" />
+        <site name="tracker" pos="2.30553936355e-05 0.0610980319414 0.0365000001555" size=".0015" group="4" rgba="0 0 0 0" xyaxes="-1 0 0 0 1 0" />
+        <geom name="revj_mti_collision" type="box" pos="0 0.0004 0.02155" size="0.0158 0.0141 0.0065" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" />
+        <inertial pos="-1.2615125383e-07 -1.11445226677e-07 0.00608447724911" mass="0.112412488387" fullinertia="4.50661334164e-05 0.000120434806598 0.000134235926069 -2.78474036084e-12 2.32193385047e-10 1.43835412165e-10" />
+        <body name="cartpole_adapter">
+          <body name="revj_pendulum" quat=".707106781186548 0 0 .707106781186548">
+            <inertial pos="0.000146877275007 -0.0858538956773 -0.0438383761864" mass="0.495858697465" fullinertia="0.00157989781724 0.000379069238135 0.00140092623108 -4.31594699006e-06 1.17404960313e-06 -0.000251971298759" />
+            <geom name="cartpole_mounting_foot" type="box" pos="0 0 -.014" size=".016 .062 .004" group="3" rgba="0 0 0 0" contype="0" conaffinity="0" mass="0" />
+            <geom name="revj_pendulum_bracket" type="box" pos="0 -0.082 -0.029" size="0.022 0.066 0.011" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" />
+            <geom name="revj_bearing_housing" type="box" pos="0 -0.132 -0.062" size="0.024 0.02 0.024" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" />
+            <geom name="brt38_housing_collision" type="cylinder" pos="0 -0.041 -0.062" size="0.0195 0.0195" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" xyaxes="1 0 0 0 0 -1" />
+            <site name="brt38_shaft_site" pos="0 -0.0605 -0.062" size=".0015" group="4" rgba="0 0 0 0" xyaxes="1 0 0 0 0 -1" />
+            <body name="task_mount" pos="0 -0.164 -0.062">
+              <body name="pendulum_rotor">
+                <joint name="pendulum_hinge" type="hinge" axis="0 1 0" limited="false" armature="0" frictionloss="0" damping=".0001" />
+                <inertial pos="6.48415205664e-05 0.0209656814263 0.097287622151" mass="0.169171261301" fullinertia="0.00229907032071 0.00213026823131 0.00017740104104 1.67032401724e-07 1.05666171504e-06 0.000344399379683" />
+                <geom name="pendulum_rod" type="cylinder" pos="0 0 0.13" size="0.004 0.125" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" />
+                <geom name="pendulum_tip" type="cylinder" pos="0 0 0.247" size="0.012 0.008" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" />
+                <site name="pendulum_tip_site" pos="0 0 0.255" size=".0015" group="4" rgba="0 0 0 0" />
+              </body>
+            </body>
+          </body>
+        </body>
+        <geom name="revj_receiver_collision" type="box" pos="0 0 -0.002" size="0.061 0.033 0.008" group="3" mass="0" rgba="0 0 0 0" contype="0" conaffinity="0" />
+      </body>
+    </body>
+    <body name="main_base" pos="0 0 0" quat="1 0 0 0">
+      <body name="digui" pos="-1.1895     -0.56500047  0.19499977" quat="-2.59736365e-06  2.59734136e-06  7.07109160e-01  7.07104840e-01">
+        <body name="kuka" pos="0 .1 0" quat="0.707107 -0.707107 0 0">
+          <body name="kuka_link1" pos="0 0 0.37" quat="0.492445 0 0 -0.870344">
+            <inertial pos="0.0094113 -0.038043 0.39655" quat="0.578912 0.423468 0.49509 0.490329" mass="19.948" diaginertia="0.227491 0.191831 0.135318" />
+            <joint name="kuka_joint1" pos="0 0 0" axis="0 0 1" damping="10.0" armature="1" range="-3.14 3.14" />
+            <body name="kuka_link2" pos="0.33 0.019 0.4194" quat="0.993572 0 -0.113202 0">
+              <inertial pos="-0.0016866 -0.21706 0.41296" quat="0.999258 0.0367133 -0.0019147 0.0115071" mass="96.471" diaginertia="17.6432 17.5375 1.4786" />
+              <joint name="kuka_joint2" pos="0 0 0" axis="0 1 0" damping="10.0" armature="1" range="-3.14 3.14" />
+              <body name="kuka_link3" pos="0 -0.124 1.15" quat="-0.28761 0.287604 0.645976 0.645972">
+                <inertial pos="0.25957 0.16735 0.1066" quat="-0.00786547 0.707053 -0.0128375 0.707" mass="6.3622" diaginertia="0.0413861 0.0412333 0.0125056" />
+                <joint name="kuka_joint3" pos="0 0 0" axis="0 0 1" damping="10.0" armature="1" range="-3.14 3.14" />
+                <body name="kuka_link4" pos="-0.8685 0.115 0.105">
+                  <inertial pos="-0.18467 -5.8245e-06 0.0044926" quat="-0.000470567 0.725456 -0.000519349 0.688268" mass="5.0534" diaginertia="0.0893772 0.088803 0.0122348" />
+                  <joint name="kuka_joint4" pos="0 0 0" axis="1 0 0" damping="5.0" armature="1" range="-3.14 3.14" />
+                  <body name="kuka_link5" pos="-0.3515 0 0.059" quat="0.906309 0 0 0.422616">
+                    <inertial pos="-0.0517652 -4.46545e-05 -0.0251744" quat="0.667039 0.232498 0.231581 0.66886" mass="6.82991" diaginertia="0.085872 0.0730105 0.0421949" />
+                    <joint name="kuka_joint5" pos="0 0 0" axis="0 0 1" damping="5.0" armature="1" range="-3.14 3.14" />
+                    <body name="kuka_link6" pos="-0.17 0 -0.059" quat="-1.26539e-06 -3.44837e-06 0.93879 0.344491">
+                      <inertial pos="0.023222 -7.495e-06 5.0666e-05" quat="0.999993 0.00362114 0.00020819 5.28462e-05" mass="0.57684" diaginertia="0.0013781 0.00076701 0.00076487" />
+                      <joint name="kuka_joint6" pos="0 0 0" axis="1 0 0" damping="5.0" armature="1" range="-3.14 3.14" />
+                      <body name="movement_base" pos="0.344000014 5.7892e-05 0.000635119" quat="0.707107 0 0 0.707107">
+                        <inertial pos="0 0 0" mass="18" diaginertia="2.491 1.831 1.318" />
+                        <site name="movement_base_site" />
+                        <body name="force_sensor" pos="0 0 0" quat="1 0 0 0">
+                          <site name="attachment_site1" />
+                          <inertial mass="0.045" pos="-0 0 0" diaginertia="0.0001 0.0001 0.0001" />
+                          <geom type="cylinder" size="0.1 0.0143" pos="0 0 0.1693" rgba="0.2 0.25 0.25 1" contype="0" conaffinity="0" />
+                          <body name="force_sensor_tip" pos="0 0 0.185" quat="0.70710678 0.70710678 0 0">
+                            <inertial mass="1e-6" pos="0 0 0" diaginertia="1e-9 1e-9 1e-9" />
+                            <site name="force_sensor_weld_site" />
+                          </body>
+                        </body>
+                        <geom name="mobile_contact_cabinet_case_1" type="box" pos="-0.036618106 -0.001804611 -0.106501272" size="0.176750004 0.220001273 0.043501269" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_cabinet_front_1" type="box" pos="-0.209118106 -0.001805885 -0.106099999" size="0.00625 0.240999997 0.044" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_caster_1" type="box" pos="-0.213411133 0.204542695 -0.197" size="0.036499999 0.049457305 0.041" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_caster_2" type="box" pos="-0.213411133 -0.227457305 -0.197" size="0.036499999 0.049457305 0.041" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_caster_3" type="box" pos="0.224868438 0.216 -0.197" size="0.049457305 0.036499999 0.041" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_caster_4" type="box" pos="0.201953828 -0.216 -0.197" size="0.049457305 0.036499999 0.041" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_1" type="box" pos="0.265000105 0.265000016 -6e-09" size="0.014999986 0.014999986 0.150000006" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_2" type="box" pos="0.264999895 -0.264999984 6e-09" size="0.014999986 0.014999986 0.150000006" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_3" type="box" pos="-0.265000105 0.264999984 -6e-09" size="0.014999986 0.014999986 0.150000006" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_4" type="box" pos="-0.264999895 -0.264999984 -6e-09" size="0.014999986 0.014999986 0.150000006" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_5" type="box" pos="0.264999895 -0 -0.135000016" size="0.014999986 0.25 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_6" type="box" pos="0 0.265000105 -0.135000016" size="0.25 0.014999986 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_7" type="box" pos="-0 -0.265000105 -0.135000016" size="0.25 0.014999986 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_8" type="box" pos="-0.265000105 -0 0.134999984" size="0.014999986 0.25 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_9" type="box" pos="0.264999895 -0 0.134999984" size="0.014999986 0.25 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_10" type="box" pos="-0 -0.264999895 0.134999984" size="0.25 0.014999986 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_11" type="box" pos="0 0.265000105 0.134999984" size="0.25 0.014999986 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_profile_12" type="box" pos="-0.265000105 -0 -0.135000016" size="0.014999986 0.25 0.014999986" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_power_strip_1" type="box" pos="0.202888558 0.02289063 -0.126326998" size="0.036558362 0.178174019 0.017673003" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_flange_adapter_1" type="box" pos="-0.000964501 0.295 -0.000635119" size="0.160906605 0.01 0.075000003" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_side_plate_1" type="box" pos="0 0.2825 0" size="0.280000001 0.0025 0.155000001" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_lower_deck_1" type="box" pos="-2e-09 4e-09 -0.153" size="0.280000001 0.280000001 0.003" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <geom name="mobile_contact_sensor_deck_1" type="box" pos="-2e-09 4e-09 0.1525" size="0.280000001 0.280000001 0.0025" group="3" mass="0" contype="0" conaffinity="0" rgba="0 0 0 0" />
+                        <site name="mobile_kuka_flange_site" pos="-5.7892e-05 0.299000014 -0.000635119" xyaxes="1 0 0 0 0 1" group="4" size=".001" rgba="0 0 0 0" />
+                        <site name="mobile_sensor_seat" pos="0 0 0.155" group="4" size=".001" rgba="0 0 0 0" />
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="ajoint1" joint="kuka_joint1" kp="860000" kv="1400" ctrlrange="-3.14 3.14" />
+    <position name="ajoint2" joint="kuka_joint2" kp="860000" kv="1400" ctrlrange="-3.14 3.14" />
+    <position name="ajoint3" joint="kuka_joint3" kp="860000" kv="1400" ctrlrange="-3.14 3.14" />
+    <position name="ajoint4" joint="kuka_joint4" kp="160000" kv="900" ctrlrange="-3.14 3.14" />
+    <position name="ajoint5" joint="kuka_joint5" kp="160000" kv="900" ctrlrange="-3.14 3.14" />
+    <position name="ajoint6" joint="kuka_joint6" kp="160000" kv="900" ctrlrange="-3.14 3.14" />
+  <motor name="actuator1" joint="motor1" gear="1" ctrllimited="true" ctrlrange="-60 60" /><motor name="actuator2" joint="motor2" gear="1" ctrllimited="true" ctrlrange="-60 60" /><motor name="actuator3" joint="motor3" gear="1" ctrllimited="true" ctrlrange="-60 60" /><motor name="actuator4" joint="motor4" gear="1" ctrllimited="true" ctrlrange="-60 60" /><motor name="actuator5" joint="motor5" gear="1" ctrllimited="true" ctrlrange="-7 7" /><motor name="actuator6" joint="motor6" gear="1" ctrllimited="true" ctrlrange="-7 7" /><motor name="actuator7" joint="motor7" gear="1" ctrllimited="true" ctrlrange="-7 7" /></actuator>
+  <sensor>
+    <force name="attachment_site_force" site="force_sensor_weld_site" />
+    <torque name="attachment_site_torque" site="force_sensor_weld_site" />
+    <jointactuatorfrc name="fr3_joint_torque_joint1" joint="joint1" />
+    <jointactuatorfrc name="fr3_joint_torque_joint2" joint="joint2" />
+    <jointactuatorfrc name="fr3_joint_torque_joint3" joint="joint3" />
+    <jointactuatorfrc name="fr3_joint_torque_joint4" joint="joint4" />
+    <jointactuatorfrc name="fr3_joint_torque_joint5" joint="joint5" />
+    <jointactuatorfrc name="fr3_joint_torque_joint6" joint="joint6" />
+    <jointactuatorfrc name="fr3_joint_torque_joint7" joint="joint7" />
+  </sensor>
+  <equality>
+    <weld name="grasp1" site1="force_sensor_weld_site" site2="transition_plate_site" solref="0.0001 1" solimp="0.9999 0.9999 0.001" active="false" torquescale="1" />
+  <joint name="pendulum_hand" joint1="pendulum_hinge" polycoef="0 0 0 0 0" active="false" /></equality>
+<tendon><fixed name="spring1" stiffness="13816.7" damping="14.681298307711074" springlength="0"><joint joint="motor1" coef="1" /><joint joint="joint1" coef="-1" /></fixed><fixed name="spring2" stiffness="13878.0" damping="14.713830228733782" springlength="0"><joint joint="motor2" coef="1" /><joint joint="joint2" coef="-1" /></fixed><fixed name="spring3" stiffness="13325.0" damping="14.417697458332242" springlength="0"><joint joint="motor3" coef="1" /><joint joint="joint3" coef="-1" /></fixed><fixed name="spring4" stiffness="13250.0" damping="14.377065069060516" springlength="0"><joint joint="motor4" coef="1" /><joint joint="joint4" coef="-1" /></fixed><fixed name="spring5" stiffness="8306.0" damping="7.012240726044708" springlength="0"><joint joint="motor5" coef="1" /><joint joint="joint5" coef="-1" /></fixed><fixed name="spring6" stiffness="8399.0" damping="7.051388515746385" springlength="0"><joint joint="motor6" coef="1" /><joint joint="joint6" coef="-1" /></fixed><fixed name="spring7" stiffness="8368.0" damping="7.03836344614286" springlength="0"><joint joint="motor7" coef="1" /><joint joint="joint7" coef="-1" /></fixed></tendon></mujoco>
