@@ -81,7 +81,7 @@
     .hero .eyebrow { font-size: 24px; }
     .hx { font: 600 80px/1.05 var(--display); letter-spacing: -.015em; margin: 0; text-wrap: balance; }
     .hero-sub { margin: 24px auto 0; max-width: 760px; font: 400 21px/1.381 var(--text); color: var(--ink); text-wrap: balance; }
-    .hero-title { margin: 14px auto 0; max-width: 760px; font-size: 15px; color: var(--ink2); text-wrap: balance; }
+    .hero-title { margin: 28px auto 0; max-width: 860px; font: 500 20px/1.35 var(--display); letter-spacing: -.01em; color: var(--ink); text-wrap: balance; }
     .hero-stage { margin-top: 48px; padding-bottom: 44px; }
     .compare {
       position: relative; border-radius: 28px; overflow: hidden; background: var(--fill); aspect-ratio: 8 / 3;
@@ -95,6 +95,8 @@
     }
     .tag.ours { left: 16px; color: var(--blue); }
     .tag.base { left: calc(50% + 16px); color: var(--red); }
+    .tag b { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .tag .sep { margin: 0 6px; opacity: .45; }
     .buy {
       display: flex; align-items: center; justify-content: space-between; gap: 24px;
       width: min(620px, 100%); margin: 28px auto 0; padding: 14px 14px 14px 24px; border-radius: 20px;
@@ -142,11 +144,6 @@
     .arrow svg { width: 14px; height: 14px; }
 
     /* Method */
-    .figure-frame {
-      display: block; margin-top: 44px; border-radius: 28px; padding: 22px; background: var(--page);
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 20px 60px rgba(0, 0, 0, .06); cursor: zoom-in;
-    }
-    .figure-frame img { display: block; width: 100%; height: auto; }
     .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
     .tile { padding: 32px 30px 34px; border-radius: 28px; background: var(--band); }
     .tile .k { font: 600 21px/1.24 var(--display); letter-spacing: -.01em; margin: 0 0 10px; }
@@ -186,17 +183,35 @@
       background: var(--page); color: var(--ink);
     }
 
-    /* Real robot (placeholder until the videos are added) */
+    /* Real robot (a one-line note until the videos are added) */
     #real { padding-bottom: 0; }
-    .placeholder {
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-      margin-top: 44px; border-radius: 28px; aspect-ratio: 8 / 3; background: var(--band);
-      border: 1px dashed var(--hair); text-align: center;
+    .soon-row {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 28px; padding: 18px 22px;
+      border-radius: 18px; background: var(--band); color: var(--ink2); font-size: 17px;
     }
-    .placeholder p { margin: 0; font: 600 24px/1.17 var(--display); letter-spacing: -.015em; color: var(--faint); }
     .soon-tag {
-      padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      flex: none; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
       background: var(--page); color: var(--ink2); box-shadow: 0 0 0 1px rgba(0, 0, 0, .05);
+    }
+
+    /* Method diagram (simplified; the paper figure opens from the caption) */
+    .diagram { margin: 44px 0 0; padding: 28px 28px 20px; border-radius: 28px; background: var(--band); }
+    .diagram svg { display: block; width: 100%; height: auto; }
+    .diagram .tall { display: none; }
+    .diagram figcaption { margin-top: 14px; font-size: 14px; color: var(--ink2); text-align: right; }
+    .dg-box { fill: var(--page); stroke: var(--hair); stroke-width: 1; }
+    .dg-box.plant { fill: var(--fill); stroke: none; }
+    .dg-box.key { stroke: var(--blue); stroke-width: 1.5; }
+    .dg-t { font: 600 15px var(--text); fill: var(--ink); letter-spacing: -.01em; }
+    .dg-s { font: 400 13px var(--text); fill: var(--ink2); }
+    .dg-l { font: 400 12px var(--text); fill: var(--faint); }
+    .dg-line { fill: none; stroke: var(--faint); stroke-width: 1.4; }
+    .dg-line.key { stroke: var(--blue); }
+    .dg-num { fill: var(--blue); }
+    .dg-num-t { font: 600 12px var(--text); fill: #fff; }
+    .tile .badge {
+      display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-right: 8px;
+      border-radius: 50%; background: var(--blue); color: #fff; font: 600 12px/1 var(--text); vertical-align: 3px;
     }
 
     /* Paper */
@@ -233,14 +248,21 @@
       .hero-sub { font-size: 19px; }
       .hl-head { font-size: 36px; line-height: 1.11; }
       .lede { font-size: 19px; }
-      .compare, .placeholder { border-radius: 18px; aspect-ratio: 16 / 9; }
-      .tag { top: 10px; font-size: 11px; padding: 4px 9px; }
+      /* Phones: the two halves stacked (hero_compare_tall.mp4). */
+      .compare { border-radius: 18px; aspect-ratio: 600 / 920; }
+      .compare::after { top: 50%; bottom: auto; left: 0; right: 0; width: auto; height: 2px; }
+      .tag { top: 10px; font-size: 12px; padding: 4px 10px; }
       .tag.ours { left: 10px; }
-      .tag.base { left: calc(50% + 10px); }
-      .tag-long { display: none; }
+      .tag.base { left: 10px; top: calc(50% + 10px); }
+      .diagram { padding: 16px 12px 14px; border-radius: 18px; }
+      .diagram .wide { display: none; }
+      .diagram .tall { display: block; max-width: 420px; margin: 0 auto; }
+      .diagram .tall .dg-t { font-size: 17px; }
+      .diagram .tall .dg-s { font-size: 14px; }
+      .diagram .tall .dg-l { font-size: 13px; }
+      .diagram figcaption { text-align: center; }
       .buy { flex-direction: column; align-items: stretch; text-align: center; padding: 18px; }
       .cta { justify-content: center; }
-      .figure-frame { padding: 10px; border-radius: 18px; }
       .faq summary { font-size: 19px; }
       .faq .ans { font-size: 17px; padding-right: 0; }
       .paper h2 { font-size: 28px; }
@@ -262,27 +284,25 @@
         <a href="#cite">Paper</a>
       </div>
     </div>
-    <span class="pill soon hide-sm" title="Manuscript in preparation">Paper</span>
     <a class="pill solid" href="./three/">Try it</a>
   </nav>
 
   <main>
     <section class="hero" id="top">
       <div class="wrap">
-        <p class="eyebrow rv">DEER-WBC</p>
         <h1 class="hx rv">Steady hands.<br />Moving ground.</h1>
         <p class="hero-sub rv">A manipulator that stays steady while its base moves, from end-effector sensing alone.</p>
         <p class="hero-title rv">Dual&#8209;Channel End&#8209;Effector&#8209;Rooted Whole&#8209;Body Control of Manipulators Under Unknown Base&nbsp;Motion</p>
       </div>
       <div class="wrap hero-stage">
         <div class="compare rv">
-          <video autoplay muted loop playsinline preload="auto" poster="./media/hero_compare.jpg" aria-label="Free-standing glass of wine on a moving base: our controller versus a conventional fixed-base controller">
-            <source src="./media/hero_compare.mp4" type="video/mp4" />
-          </video>
-          <span class="tag ours">DEER-WBC</span>
-          <span class="tag base">Fixed-base<span class="tag-long"> controller</span></span>
+          <video id="heroVideo" autoplay muted loop playsinline preload="auto" poster="./media/hero_compare.jpg"
+            data-wide="./media/hero_compare.mp4" data-tall="./media/hero_compare_tall.mp4" data-tall-poster="./media/hero_compare_tall.jpg"
+            aria-label="Free-standing glass of wine on a moving base: our controller versus a conventional fixed-base controller"></video>
+          <span class="tag ours">DEER-WBC<span class="sep">·</span><b>1.0 mm</b></span>
+          <span class="tag base">Fixed-base<span class="sep">·</span><b>163 mm</b></span>
         </div>
-        <p class="caption rv">Same moving base, same free-standing glass of wine. The fixed-base controller assumes the base is still. Recorded from the in-browser simulator; the wine surface follows a first-mode sloshing model.</p>
+        <p class="caption rv">Same moving base, same free-standing glass of wine. The fixed-base controller assumes the base is still. Numbers: end-effector position RMSE over the clip (t = 4–11.5 s, one sample per video frame). Recorded from the in-browser simulator; the wine surface follows a first-mode sloshing model.</p>
         <div class="buy rv">
           <p>Five demos, running live in your browser.<span>MuJoCo and the controller, compiled to WebAssembly.</span></p>
           <a class="cta" href="./three/">Try it</a>
@@ -327,10 +347,7 @@
       <div class="wrap">
         <h2 class="hl-head rv">On the real robot.</h2>
         <p class="lede rv">Videos of the real-robot experiments will be added here.</p>
-        <div class="placeholder rv" role="note">
-          <span class="soon-tag">Coming soon</span>
-          <p>Real-robot videos</p>
-        </div>
+        <p class="soon-row rv"><span class="soon-tag">Coming soon</span>Real-robot videos</p>
       </div>
     </section>
 
@@ -338,23 +355,96 @@
       <div class="wrap">
         <h2 class="hl-head rv">How it works.</h2>
         <p class="lede rv">The whole-body dynamics are written from the end effector, so the controller needs <b>only end-effector sensing</b> and no measurement of the moving base.</p>
-        <a class="figure-frame rv" href="./media/framework.webp" target="_blank" rel="noopener" title="Open full-size figure">
-          <picture>
-            <source srcset="./media/framework.webp" type="image/webp" />
-            <img src="./media/framework.jpg" alt="System overview: ESKF state estimation, SE(3) impedance reference, unified constrained inverse-dynamics QP, and dual-channel uncertainty compensation" loading="lazy" />
-          </picture>
-        </a>
+        <figure class="diagram rv">
+          <svg class="wide" viewBox="-2 30 1124 336" role="img" aria-label="Simplified system overview: end-effector sensing, ESKF task state, SE(3) impedance reference, whole-body QP, arm on a moving base, and dual-channel compensation">
+            <defs><marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#86868b"/></marker><marker id="abw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0071e3"/></marker></defs>
+            <rect class="dg-box" x="0" y="120" width="184" height="100" rx="16"/>
+            <text class="dg-t" x="18" y="156">End-effector sensing</text>
+            <text class="dg-s" x="18" y="178">Pose and IMU</text>
+            <text class="dg-s" x="18" y="196">at the end effector</text>
+            <rect class="dg-box key" x="234" y="120" width="184" height="100" rx="16"/>
+            <text class="dg-t" x="252" y="156">Task state</text>
+            <text class="dg-s" x="252" y="178">Asynchronous ESKF</text>
+            <text class="dg-s" x="252" y="196">with delay replay</text>
+            <circle class="dg-num" cx="396" cy="142" r="11"/><text class="dg-num-t" x="396" y="146" text-anchor="middle">1</text>
+            <rect class="dg-box" x="468" y="120" width="184" height="100" rx="16"/>
+            <text class="dg-t" x="486" y="156">Task reference</text>
+            <text class="dg-s" x="486" y="178">SE(3) impedance,</text>
+            <text class="dg-s" x="486" y="196">complementary damping</text>
+            <rect class="dg-box key" x="702" y="120" width="184" height="100" rx="16"/>
+            <text class="dg-t" x="720" y="156">Whole-body QP</text>
+            <text class="dg-s" x="720" y="178">Inverse dynamics with</text>
+            <text class="dg-s" x="720" y="196">joint and torque limits</text>
+            <circle class="dg-num" cx="864" cy="142" r="11"/><text class="dg-num-t" x="864" y="146" text-anchor="middle">2</text>
+            <rect class="dg-box plant" x="936" y="120" width="184" height="100" rx="16"/>
+            <text class="dg-t" x="954" y="156">Arm on a moving base</text>
+            <text class="dg-s" x="954" y="178">Torque-sensing arm,</text>
+            <text class="dg-s" x="954" y="196">base never measured</text>
+            <path class="dg-line" d="M188,170 H230" marker-end="url(#ahw)"/>
+            <path class="dg-line" d="M422,170 H464" marker-end="url(#ahw)"/>
+            <path class="dg-line" d="M656,170 H698" marker-end="url(#ahw)"/>
+            <path class="dg-line" d="M890,170 H932" marker-end="url(#ahw)"/>
+            <text class="dg-l" x="911" y="192" text-anchor="middle">1 kHz</text>
+            <path class="dg-line" d="M1028,120 V58 H92 V116" marker-end="url(#ahw)"/>
+            <text class="dg-l" x="560" y="48" text-anchor="middle">End-effector pose and IMU (no sensor on the moving base)</text>
+            <rect class="dg-box key" x="702" y="262" width="418" height="100" rx="16"/>
+            <text class="dg-t" x="720" y="298">Dual-channel compensation</text>
+            <text class="dg-s" x="720" y="320">Upstream: learned friction model (GRU)</text>
+            <text class="dg-s" x="720" y="338">Downstream: momentum observer</text>
+            <circle class="dg-num" cx="1098" cy="284" r="11"/><text class="dg-num-t" x="1098" y="288" text-anchor="middle">3</text>
+            <path class="dg-line" d="M1028,224 V256" marker-end="url(#ahw)"/>
+            <text class="dg-l" x="1038" y="246">q, q̇, τ</text>
+            <path class="dg-line key" d="M794,262 V228" marker-end="url(#abw)"/>
+            <text class="dg-l" x="804" y="250">compensation</text>
+          </svg>
+          <svg class="tall" viewBox="0 26 400 716" role="img" aria-label="Simplified system overview">
+            <defs><marker id="aht" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#86868b"/></marker><marker id="abt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0071e3"/></marker></defs>
+            <rect class="dg-box" x="40" y="40" width="320" height="84" rx="16"/>
+            <text class="dg-t" x="58" y="74">End-effector sensing</text>
+            <text class="dg-s" x="58" y="98">Pose and IMU at the end effector</text>
+            <rect class="dg-box key" x="40" y="156" width="320" height="84" rx="16"/>
+            <text class="dg-t" x="58" y="190">Task state</text>
+            <text class="dg-s" x="58" y="214">Asynchronous ESKF with delay replay</text>
+            <circle class="dg-num" cx="338" cy="178" r="11"/><text class="dg-num-t" x="338" y="182" text-anchor="middle">1</text>
+            <rect class="dg-box" x="40" y="272" width="320" height="84" rx="16"/>
+            <text class="dg-t" x="58" y="306">Task reference</text>
+            <text class="dg-s" x="58" y="330">SE(3) impedance, complementary damping</text>
+            <rect class="dg-box key" x="40" y="388" width="320" height="84" rx="16"/>
+            <text class="dg-t" x="58" y="422">Whole-body QP</text>
+            <text class="dg-s" x="58" y="446">Inverse dynamics, joint and torque limits</text>
+            <circle class="dg-num" cx="338" cy="410" r="11"/><text class="dg-num-t" x="338" y="414" text-anchor="middle">2</text>
+            <rect class="dg-box plant" x="40" y="504" width="320" height="84" rx="16"/>
+            <text class="dg-t" x="58" y="538">Arm on a moving base</text>
+            <text class="dg-s" x="58" y="562">Torque-sensing arm, base never measured</text>
+            <path class="dg-line" d="M200,127 V153" marker-end="url(#aht)"/>
+            <path class="dg-line" d="M200,243 V269" marker-end="url(#aht)"/>
+            <path class="dg-line" d="M200,359 V385" marker-end="url(#aht)"/>
+            <path class="dg-line" d="M200,475 V501" marker-end="url(#aht)"/>
+            <text class="dg-l" x="210" y="492">1 kHz</text>
+            <rect class="dg-box key" x="40" y="636" width="320" height="96" rx="16"/>
+            <text class="dg-t" x="58" y="670">Dual-channel compensation</text>
+            <text class="dg-s" x="58" y="694">Upstream: learned friction (GRU)</text>
+            <text class="dg-s" x="58" y="714">Downstream: momentum observer</text>
+            <circle class="dg-num" cx="338" cy="658" r="11"/><text class="dg-num-t" x="338" y="662" text-anchor="middle">3</text>
+            <path class="dg-line" d="M200,591 V630" marker-end="url(#aht)"/>
+            <text class="dg-l" x="210" y="615">q, q̇, τ</text>
+            <path class="dg-line key" d="M360,684 H384 V430 H366" marker-end="url(#abt)"/>
+            <path class="dg-line" d="M40,546 H16 V82 H34" marker-end="url(#aht)"/>
+            <text class="dg-l" transform="translate(11 314) rotate(-90)" text-anchor="middle">end-effector pose and IMU</text>
+          </svg>
+          <figcaption><a href="./media/framework.webp" target="_blank" rel="noopener">Full system figure from the paper ›</a></figcaption>
+        </figure>
         <div class="tiles">
           <article class="tile rv">
-            <h3 class="k">End-effector-rooted sensing</h3>
+            <h3 class="k"><span class="badge">1</span>End-effector-rooted sensing</h3>
             <p>An asynchronous error-state Kalman filter fuses <b>end-effector pose and IMU</b> into the task state, with lag-free delay replay.</p>
           </article>
           <article class="tile rv">
-            <h3 class="k">One constrained QP</h3>
+            <h3 class="k"><span class="badge">2</span>One constrained QP</h3>
             <p>An SE(3) impedance reference with complementary damping is realized by <b>a single inverse-dynamics QP</b> with joint-safety and actuator limits.</p>
           </article>
           <article class="tile rv">
-            <h3 class="k">Dual-channel compensation</h3>
+            <h3 class="k"><span class="badge">3</span>Dual-channel compensation</h3>
             <p>An upstream <b>learned friction model</b> and a downstream <b>momentum observer</b> absorb actuator-side and unknown base-side disturbances.</p>
           </article>
         </div>
@@ -368,14 +458,14 @@
         <div class="stats">
           <div class="stat rv"><span class="v">1 kHz</span><p><b>control and physics</b>, one controller update per 1 ms physics step.</p></div>
           <div class="stat rv"><span class="v">~50 µs</span><p><b>per control step</b> in WebAssembly, well inside the 1 ms budget.</p></div>
-          <div class="stat rv"><span class="v">0</span><p><b>servers</b>. Every step is computed on your machine.</p></div>
+          <div class="stat rv"><span class="v">&lt; 9 MB</span><p><b>one compressed download</b>, then every step is computed on your machine.</p></div>
         </div>
-        <p class="fineprint rv">Control-step time is the mean measured by the site's headless WebAssembly check on a desktop CPU (38–55 µs across the demos). It varies with the device.</p>
+        <p class="fineprint rv">Control-step time is the mean measured by the site's headless WebAssembly check on a desktop CPU (38–55 µs across the demos). It varies with the device. The download is the gzip-compressed simulator with all five demos; no server computes anything.</p>
       </div>
     </section>
 
     <section class="sec" id="faq">
-      <div class="wrap-copy">
+      <div class="wrap">
         <h2 class="hl-head rv">Questions? Answers.</h2>
         <div class="faq-top"><button class="faq-all" id="faqAll" type="button" aria-expanded="false">Expand all <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 3.5L5 7l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
         <div class="faq" id="faqList">
@@ -420,6 +510,14 @@
     (() => {
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const hasIO = 'IntersectionObserver' in window;
+
+      // Hero: the side-by-side clip, or the stacked one on phones.
+      const hero = document.getElementById('heroVideo');
+      if (hero) {
+        const tall = window.matchMedia('(max-width: 734px)').matches;
+        if (tall) hero.poster = hero.dataset.tallPoster;
+        hero.src = tall ? hero.dataset.tall : hero.dataset.wide;
+      }
 
       // Reveal blocks as they enter the viewport.
       const rv = [...document.querySelectorAll('.rv')];

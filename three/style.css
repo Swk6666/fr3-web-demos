@@ -11,7 +11,7 @@
   --accent-hover: #0077ed;
   --ok: #248a3d;
   --warn: #c93400;
-  --danger: #ff3b30;
+  --danger: #d70015;
   --font: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
   --display: 'Inter Tight', 'Inter Display', Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, 'JetBrains Mono', monospace;
@@ -42,6 +42,14 @@ button, select, input { font-family: inherit; }
 }
 .app-shell.sidebar-collapsed { grid-template-columns: 1fr; }
 .app-shell.sidebar-collapsed .sidebar { display: none; }
+
+/* Media capture (?capture=1): the 3D view alone, filling the window. */
+body.capture .app-shell { display: block; }
+body.capture .viewport-wrap { position: fixed; inset: 0; }
+body.capture .topbar,
+body.capture .sidebar,
+body.capture .viewport-wrap > :not(canvas),
+body.capture .tour { display: none !important; }
 
 sub, sup { font-size: 0.74em; line-height: 0; }
 .hidden { display: none !important; }
@@ -188,7 +196,7 @@ sub, sup { font-size: 0.74em; line-height: 0; }
 .readout-unit { font-size: 17px; font-weight: 500; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
 .readout-sub { font-size: 12px; color: var(--faint); margin-top: 2px; }
 .readout.baseline .readout-value { color: var(--danger); }
-.readout.baseline .readout-tag { color: var(--danger); background: rgba(255, 59, 48, 0.10); }
+.readout.baseline .readout-tag { color: var(--danger); background: rgba(215, 0, 21, 0.08); }
 
 /* Glass friction budget (Still Wine / Tracking) */
 .readout-extra { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); min-width: 190px; }

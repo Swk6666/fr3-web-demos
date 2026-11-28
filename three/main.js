@@ -1960,7 +1960,10 @@ function updateHudAndPlots(tel, rtf) {
   const C_BLUE = '#0071e3';
   const C_GREEN = '#34c759';
   const C_ORANGE = '#ff9500';
-  const C_GHOST = '#8e8e93';
+  // Site-wide colour rule: blue is our controller, red the fixed-base baseline (ghost or switched off).
+  const C_RED = '#d70015';
+  const C_GHOST = C_RED;
+  const C_MAIN = currentParams.controllerEnabled ? C_BLUE : C_RED;
   const legend = (items) =>
     items.map(([c, t]) => `<span><i class="dot" style="background:${c}"></i>${t}</span>`).join('');
 
@@ -1980,9 +1983,9 @@ function updateHudAndPlots(tel, rtf) {
       // Ours vs. the fixed-base ghost differ by orders of magnitude: log axis
       const lg = (v) => Math.log10(Math.max(0.05, v));
       chart1Title.textContent = 'End-effector error (mm, log scale)';
-      chart1Legend.innerHTML = legend([[C_BLUE, 'Ours'], [C_GHOST, 'Fixed-base']]);
+      chart1Legend.innerHTML = legend([[C_MAIN, 'Ours'], [C_GHOST, 'Fixed-base']]);
       series = [
-        { color: C_BLUE, digits: 2, get: (p) => lg(p.eePosErrMm), raw: (p) => p.eePosErrMm },
+        { color: C_MAIN, digits: 2, get: (p) => lg(p.eePosErrMm), raw: (p) => p.eePosErrMm },
         {
           color: C_GHOST, digits: 1, dash: [4, 3],
           get: (p) => (p.ghost ? lg(p.ghost.eePosErrMm) : null),
@@ -1992,9 +1995,9 @@ function updateHudAndPlots(tel, rtf) {
       chartOpts = { log: true, unit: 'mm' };
     } else {
       chart1Title.textContent = 'End-effector error (mm)';
-      chart1Legend.innerHTML = legend([[C_BLUE, 'Error'], [C_GREEN, 'RMSE']]);
+      chart1Legend.innerHTML = legend([[C_MAIN, 'Error'], [C_GREEN, 'RMSE']]);
       series = [
-        { color: C_BLUE, tag: '', digits: 2, get: (p) => p.eePosErrMm },
+        { color: C_MAIN, tag: '', digits: 2, get: (p) => p.eePosErrMm },
         { color: C_GREEN, tag: '', digits: 2, get: (p) => p.eePosRmseMm },
       ];
       chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
@@ -2007,9 +2010,9 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Pendulum angle from upright (deg)';
-    chart1Legend.innerHTML = legend([[C_ORANGE, 'Angle'], ['rgba(52,199,89,0.45)', '±10° band']]
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Angle'], ['rgba(52,199,89,0.45)', '±10° band']]
       .concat(tel.ghost ? [[C_GHOST, 'Fixed-base']] : []));
-    series = [{ color: C_ORANGE, tag: '', digits: 1, breakJump: 180, get: (p) => p.pendulumAngleDeg }];
+    series = [{ color: C_MAIN, tag: '', digits: 1, breakJump: 180, get: (p) => p.pendulumAngleDeg }];
     if (tel.ghost) {
       series.push({ color: C_GHOST, digits: 1, dash: [4, 3], breakJump: 180,
         get: (p) => (p.ghost ? p.ghost.pendulumAngleDeg : null) });
@@ -2030,10 +2033,10 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Base sway vs end-effector error (mm)';
-    chart1Legend.innerHTML = legend([[C_ORANGE, 'Base'], [C_BLUE, 'End effector'], [C_GREEN, 'RMSE']]);
+    chart1Legend.innerHTML = legend([[C_ORANGE, 'Base'], [C_MAIN, 'End effector'], [C_GREEN, 'RMSE']]);
     series = [
       { color: C_ORANGE, tag: '', digits: 1, get: (p) => p.beamTipDispMm || 0 },
-      { color: C_BLUE, tag: '', digits: 2, get: (p) => p.eePosErrMm },
+      { color: C_MAIN, tag: '', digits: 2, get: (p) => p.eePosErrMm },
       { color: C_GREEN, tag: '', digits: 2, get: (p) => p.eePosRmseMm },
     ];
     chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
@@ -2045,10 +2048,10 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Docking gap (mm) and contact force (N)';
-    chart1Legend.innerHTML = legend([[C_BLUE, 'Gap'], [C_ORANGE, 'Force']]
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Gap'], [C_ORANGE, 'Force']]
       .concat(tel.ghost ? [[C_GHOST, 'Fixed-base gap']] : []));
     series = [
-      { color: C_BLUE, tag: '', digits: 2, get: (p) => p.dockingGapMm },
+      { color: C_MAIN, tag: '', digits: 2, get: (p) => p.dockingGapMm },
       { color: C_ORANGE, tag: '', digits: 2, get: (p) => p.dockingForceN },
     ];
     if (tel.ghost) {
@@ -2154,6 +2157,43 @@ document.querySelectorAll('.keycap[data-key]').forEach((el) => {
 });
 
 const worker = new Worker(new URL('./sim_worker.js', import.meta.url), { type: 'module' });
+
+// Media capture (?capture=1, driven by simulation/web/tools/record_media.mjs): the UI is hidden and the
+// simulation advances only through window.__fr3Capture.step(n): n physics steps, then one rendered frame.
+const captureMode = new URLSearchParams(window.location.search).get('capture') === '1';
+const captureWaiters = new Map();
+let captureNextId = 0;
+let captureLastTel = null;
+let captureReadyResolve = null;
+if (captureMode) {
+  document.body.classList.add('capture');
+  const ready = new Promise((resolve) => {
+    captureReadyResolve = resolve;
+  });
+  window.__fr3Capture = {
+    ready,
+    step(steps) {
+      const id = ++captureNextId;
+      return new Promise((resolve) => {
+        captureWaiters.set(id, resolve);
+        worker.postMessage({ type: 'captureStep', steps, id });
+      });
+    },
+  };
+}
+
+function captureTelemetry(tel) {
+  if (!tel) return null;
+  const pick = (t) => ({
+    time: t.time,
+    eePosErrMm: t.eePosErrMm,
+    pendulumAngleDeg: t.pendulumAngleDeg,
+    dockingGapMm: t.dockingGapMm,
+    dockingSeated: t.dockingSeated,
+    phase: t.phase,
+  });
+  return { ...pick(tel), ghost: tel.ghost ? pick(tel.ghost) : null };
+}
 
 function syncCtrlSeg() {
   const on = !!currentParams.controllerEnabled;
@@ -2728,6 +2768,12 @@ worker.onmessage = async (e) => {
     hasRenderedFirstScene = true;
     loadingBanner.classList.add('hidden');
     worker.postMessage({ type: 'beginSim', loadId: msg.loadId });
+    if (captureMode) {
+      // Restart from t = 0 and hold; the recorder steps the simulation from here.
+      worker.postMessage({ type: 'setRunning', running: false });
+      worker.postMessage({ type: 'reset' });
+      captureReadyResolve?.();
+    }
   } else if (msg.type === 'refPath') {
     if (msg.loadId !== undefined && msg.loadId !== activeLoadId) return;
     updateReferencePathOverlay(msg.refPath);
@@ -2735,6 +2781,13 @@ worker.onmessage = async (e) => {
   } else if (msg.type === 'frame') {
     if (msg.loadId !== undefined && msg.loadId !== activeLoadId) return;
     applyFrame(msg);
+    if (captureMode) captureLastTel = msg.telemetry;
+  } else if (msg.type === 'captureDone') {
+    // The frame of this step was applied just before; resolve once it has been rendered.
+    const resolve = captureWaiters.get(msg.id);
+    captureWaiters.delete(msg.id);
+    const tel = captureTelemetry(captureLastTel);
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve?.(tel)));
   } else if (msg.type === 'error') {
     loadingText.textContent = `Error: ${msg.message}`;
     loadingBanner.classList.remove('hidden');

@@ -435,6 +435,16 @@ onmessage = async (e) => {
       session.stepBatch(10);
       if (ghost) ghost.stepBatch(10);
       sendFrame(0);
+    } else if (msg.type === 'captureStep' && session) {
+      // Media capture (tools/record_media.mjs): advance exactly n physics steps, then one frame.
+      running = false;
+      const n = Math.max(0, Math.floor(Number(msg.steps) || 0));
+      if (n > 0) {
+        session.stepBatch(n);
+        if (ghost) ghost.stepBatch(n);
+      }
+      sendFrame(0);
+      postMessage({ type: 'captureDone', id: msg.id });
     } else if (msg.type === 'pendulumImpulse' && session) {
       session.injectPendulumImpulse(Number(msg.deltaOmega) || 0);
       if (ghost) ghost.injectPendulumImpulse(Number(msg.deltaOmega) || 0);
