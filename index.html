@@ -12,7 +12,7 @@
     :root {
       --page: #ffffff; --band: #f5f5f7; --fill: #e8e8ed; --hair: #d2d2d7;
       --ink: #1d1d1f; --ink2: #6e6e73; --faint: #86868b;
-      --blue: #0071e3; --blue-hover: #0077ed; --red: #d70015;
+      --blue: #0071e3; --blue-hover: #0077ed;
       --text: 'Inter Web', Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
       --display: 'Inter Display Web', 'Inter Display', 'Inter Web', Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
       --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
@@ -49,8 +49,8 @@
       transition: opacity .9s var(--ease) var(--rv-delay, 0s), transform .9s var(--ease) var(--rv-delay, 0s);
     }
     .rv.in { opacity: 1; transform: none; }
-    .compare.rv { transform: translateY(32px) scale(.965); transition-duration: 1.2s; }
-    .compare.rv.in { transform: none; }
+    .hero-media.rv { transform: translateY(32px) scale(.965); transition-duration: 1.2s; }
+    .hero-media.rv.in { transform: none; }
 
     /* Floating frosted navigation */
     .nav {
@@ -96,18 +96,16 @@
     .hero-sub { margin: 20px auto 0; max-width: 760px; font: 400 21px/1.381 var(--text); color: var(--ink); text-wrap: balance; }
     .hero-title { margin: 14px auto 0; max-width: 620px; font: 400 14px/1.45 var(--text); letter-spacing: 0; color: var(--ink2); text-wrap: balance; }
     .hero-stage { margin-top: 40px; padding-bottom: 44px; }
-    .compare {
+    .hero-media {
       position: relative; border-radius: 28px; overflow: hidden; background: var(--fill); aspect-ratio: 8 / 3;
     }
-    .compare video, .compare img { display: block; width: 100%; height: 100%; object-fit: cover; }
-    .compare::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(255, 255, 255, .9); }
+    .hero-media video, .hero-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
     .tag {
       position: absolute; top: 16px; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
       background: rgba(255, 255, 255, .85); -webkit-backdrop-filter: saturate(1.8) blur(12px); backdrop-filter: saturate(1.8) blur(12px);
       box-shadow: 0 0 0 1px rgba(0, 0, 0, .05);
     }
     .tag.ours { left: 16px; color: var(--blue); }
-    .tag.base { left: calc(50% + 16px); color: var(--red); }
     .tag b { font-weight: 600; font-variant-numeric: tabular-nums; }
     .tag .sep { margin: 0 6px; opacity: .45; }
     .buy {
@@ -310,12 +308,10 @@
       .hero-sub { font-size: 19px; }
       .hl-head { font-size: 36px; line-height: 1.11; }
       .lede { font-size: 19px; }
-      /* Phones: the two halves stacked (hero_compare_tall.mp4). */
-      .compare { border-radius: 18px; aspect-ratio: 600 / 920; }
-      .compare::after { top: 50%; bottom: auto; left: 0; right: 0; width: auto; height: 2px; }
+      /* Phones: the centre 4:3 crop of the same take (hero_phone.mp4). */
+      .hero-media { border-radius: 18px; aspect-ratio: 4 / 3; }
       .tag { top: 10px; font-size: 12px; padding: 4px 10px; }
       .tag.ours { left: 10px; }
-      .tag.base { left: 10px; top: calc(50% + 10px); }
       .diagram { padding: 16px 12px 14px; border-radius: 18px; }
       .diagram .wide { display: none; }
       .diagram .tall { display: block; max-width: 420px; margin: 0 auto; }
@@ -331,7 +327,7 @@
       .hide-sm { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .rv, .compare.rv, .dg-n, .dg-a { opacity: 1; transform: none; transition: none; }
+      .rv, .hero-media.rv, .dg-n, .dg-a { opacity: 1; transform: none; transition: none; }
       .dg-flow { display: none; }
       .hcard, .hcard .thumb video, .explore-menu { transition: none; }
     }
@@ -362,16 +358,15 @@
         <p class="hero-title rv">Dual&#8209;Channel End&#8209;Effector&#8209;Rooted Whole&#8209;Body Control of Manipulators Under Unknown Base&nbsp;Motion</p>
       </div>
       <div class="wrap hero-stage">
-        <div class="compare rv">
-          <video id="heroVideo" autoplay muted loop playsinline preload="auto" poster="./media/hero_compare.jpg"
-            data-wide="./media/hero_compare.mp4" data-wide-poster="./media/hero_compare.jpg"
-            data-tall="./media/hero_compare_tall.mp4" data-tall-poster="./media/hero_compare_tall.jpg"
-            aria-label="Free-standing glass of wine on a moving base: our controller versus a conventional fixed-base controller"></video>
-          <span class="tag ours">DEER-WBC<span class="sep">·</span><b>1.0 mm</b></span>
-          <span class="tag base">Fixed-base<span class="sep">·</span><b>69 mm</b></span>
+        <div class="hero-media rv">
+          <video id="heroVideo" autoplay muted loop playsinline preload="auto" poster="./media/hero.jpg"
+            data-wide="./media/hero.mp4" data-wide-poster="./media/hero.jpg"
+            data-narrow="./media/hero_phone.mp4" data-narrow-poster="./media/hero_phone.jpg"
+            aria-label="Free-standing glass of wine held by our controller while the base under the arm keeps moving"></video>
+          <span class="tag ours">DEER-WBC<span class="sep">·</span><b>1.1 mm</b></span>
         </div>
-        <p class="caption rv">Same moving base, same free-standing glass of wine. Only the controller differs.</p>
-        <p class="caption-note rv">End-effector position RMSE over the clip (t = 4–11.5 s, every video frame). Recorded in the in-browser simulator; the fixed-base controller assumes the base is still, and the wine surface is a first-mode sloshing model.</p>
+        <p class="caption rv">The base keeps moving. The free-standing glass of wine stays put.</p>
+        <p class="caption-note rv">End-effector position RMSE over the clip (t = 4–11.5 s, every video frame). Recorded in the in-browser simulator; the wine is simulated by its first sloshing mode, weight included.</p>
         <div class="buy rv">
           <p>Five demos, running live in your browser.<span>MuJoCo and the controller, compiled to WebAssembly.</span></p>
           <a class="cta" href="./three/">Try it</a>
@@ -565,14 +560,12 @@
         <div class="faq" id="faqList">
           <details><summary>Does the controller measure the base motion?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="ans"><p>No. <b>The base is never measured.</b> The dynamics are written from the end effector, and the task state comes from end-effector pose and an IMU fused by an error-state Kalman filter. The base motion acts on the arm as an unknown disturbance.</p></div></details>
-          <details><summary>What is the fixed-base controller in the comparison?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-            <div class="ans"><p>A conventional controller that <b>assumes the base is still</b>. In the simulator, switch the controller to Fixed-base, or turn on the fixed-base ghost to run it under the same base motion next to ours.</p></div></details>
           <details><summary>What runs in the browser?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="ans"><p>MuJoCo and the controller, both compiled from C++ to WebAssembly. In all five demos, <b>the low level is the same C++ code as our offline simulation</b>: the learned friction model, the momentum observer, and an arm with elastic joints and joint friction.</p></div></details>
           <details><summary>Are these real-robot results?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="ans"><p>No. <b>Everything on this site is simulation.</b> The error readout comes from the simulated run in your tab, and contact makes long runs sensitive to tiny numerical differences, so it can differ slightly between devices. Real-robot experiments will be reported in the paper, and their videos will be added <a href="#real">on this page</a>.</p></div></details>
           <details><summary>Is the wine simulated?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-            <div class="ans"><p>The glass is a free body that rests on the tray through contact, so <b>it can slide and tip</b>. The wine surface follows a first-mode sloshing model driven by the glass motion; it is a visual model and does not push back on the glass.</p></div></details>
+            <div class="ans"><p>The glass is a free body that rests on the tray through contact, so <b>it can slide and tip</b>. The wine is part of the physics: its first sloshing mode is an equivalent pendulum inside the glass, so <b>it has its weight and pushes back on the glass</b>. Ordinary motion tilts the surface by a few degrees; shaking the glass near its natural frequency (about 2.7 Hz) or tipping it spills wine over the rim. The surface is drawn as a plane and the spilled wine as droplets.</p></div></details>
           <details><summary>Can I disturb the robot?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="ans"><p>Yes. Hold <kbd>Ctrl</kbd> / <kbd>⌘</kbd> and drag the glass or the arm to push it. On the KUKA-mounted demos you can also <b>drive the carrying robot with the keyboard</b> in six degrees of freedom and watch the arm keep its task.</p></div></details>
           <details><summary>What do I need to run it?<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
@@ -606,17 +599,17 @@
       const hasIO = 'IntersectionObserver' in window;
       const EASE = 'cubic-bezier(.28, .11, .32, 1)';
 
-      // Hero: the side-by-side clip, or the stacked one on phones; swap (keeping the time) when the width
-      // crosses the breakpoint, so a resized or rotated window never shows the other layout cropped.
+      // Hero: the wide clip, or its centre 4:3 crop on phones; swap (keeping the time) when the width
+      // crosses the breakpoint, so a resized or rotated window never shows the other framing cropped.
       const hero = document.getElementById('heroVideo');
       if (hero) {
         const mq = window.matchMedia('(max-width: 734px)');
         const pick = () => {
-          const tall = mq.matches;
-          const src = tall ? hero.dataset.tall : hero.dataset.wide;
+          const narrow = mq.matches;
+          const src = narrow ? hero.dataset.narrow : hero.dataset.wide;
           if (hero.getAttribute('src') === src) return;
           const t = hero.currentTime || 0;
-          hero.poster = tall ? hero.dataset.tallPoster : hero.dataset.widePoster;
+          hero.poster = narrow ? hero.dataset.narrowPoster : hero.dataset.widePoster;
           hero.src = src;
           if (t > 0) {
             hero.addEventListener('loadedmetadata', () => {

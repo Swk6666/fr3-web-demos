@@ -1,19 +1,12 @@
 // Dedicated Web Worker: runs MuJoCo 4.0.1 + SE(3) Impedance + ProxQP at 1 kHz inside WASM.
-// Still Wine (0) and Tracking (1) run the codex/sim-accuracy low level (WASM AlignedRunner: joint
-// sensors, link estimator, GRU, friction shaping, full MOB, SE3, QP on the elastic LuGre plant,
-// exported by simulation/web/tools/export_sim_scene.py); their fixed-base baseline and the other
-// demos keep the rigid scenes below.
+// Every demo runs the codex/sim-accuracy low level (WASM AlignedRunner: joint sensors, link
+// estimator, GRU, friction shaping, full MOB, SE3, QP on the elastic plant, exported by
+// simulation/web/tools/export_sim_scene.py); the rigid scenes below are only the fallback when an
+// aligned scene cannot be loaded.
 import createFr3SimModule from './wasm/fr3_sim_wasm.js';
 
 let Module = null;
 let session = null;
-// Ghost: a second session running the fixed-base baseline under the same base motion, stepped in
-// lockstep with the main session (same disturbances, no mouse push) and drawn translucent.
-let ghost = null;
-let ghostWanted = false;
-const GHOST_DEMOS = new Set([0, 1, 2, 4]);
-const assetBuffers = new Map();
-let seaWaveBuffer = null;
 let running = true;
 let speed = 1.0;
 let timerId = null;
@@ -24,12 +17,8 @@ let currentDemoId = 0;
 let currentLoadId = 0;
 // Demos on the codex/sim-accuracy low level -> exported scene (export_sim_scene.py SCENES).
 const ALIGNED_DEMOS = new Map([[0, 'kuka'], [1, 'kuka'], [2, 'cartpole'], [4, 'docking'], [5, 'beam']]);
-// Bodies the aligned scenes rename (web_cartpole.py: the rotor is pendulum_rotor there).
-const ALIGNED_BODY_ALIAS = { pendulum: 'pendulum_rotor' };
 const alignedScenes = new Map();   // scene -> { xml, document } once its assets are in the session
 let currentAligned = false;
-// Ghost body i -> main body index by name (the aligned plant has extra rotor bodies).
-let ghostIndex = null;
 
 const PHYSICS_ASSETS = [
   'physics_hold.xml',
@@ -124,13 +113,8 @@ async function ensureInit() {
       })
     );
     for (const [fname, buf] of results) {
-      if (fname === 'sea_wave_kuka.bin') {
-        seaWaveBuffer = buf;
-        session.loadSeaWave(buf);
-      } else {
-        assetBuffers.set(fname, buf);
-        session.addAsset(fname, buf);
-      }
+      if (fname === 'sea_wave_kuka.bin') session.loadSeaWave(buf);
+      else session.addAsset(fname, buf);
     }
     loadedAssets = true;
   }
@@ -147,7 +131,6 @@ async function ensureAligned(scene) {
   const doc = JSON.parse(documentText);
   const xml = await fetchUint8WithProgress(`${base}/${doc.xml}`, () => {});
   session.addAsset(doc.xml, xml);
-  assetBuffers.set(doc.xml, xml);
   await Promise.all(doc.gru.files.map(async (f) => {
     const bytes = await fetchUint8WithProgress(`${base}/${doc.gru.directory}/${f.name}`, () => {});
     session.writeFile(`${doc.gru.mount}/${f.name}`, bytes);
@@ -158,7 +141,7 @@ async function ensureAligned(scene) {
 }
 
 async function loadMainScene(demoId, override) {
-  const wantAligned = ALIGNED_DEMOS.has(demoId) && !(override && override.controllerEnabled === false);
+  const wantAligned = ALIGNED_DEMOS.has(demoId);
   currentAligned = false;
   if (wantAligned) {
     try {
@@ -178,46 +161,6 @@ async function loadMainScene(demoId, override) {
   }
 }
 
-// (Re)build the ghost for the current scene from the main session's parameters, baseline on.
-function syncGhostScene() {
-  const want = ghostWanted && GHOST_DEMOS.has(currentDemoId);
-  if (!want) {
-    if (ghost) {
-      ghost.delete();
-      ghost = null;
-    }
-    return;
-  }
-  if (!ghost) {
-    ghost = new Module.WasmSimSession();
-    for (const [fname, buf] of assetBuffers) ghost.addAsset(fname, buf);
-    if (seaWaveBuffer) ghost.loadSeaWave(seaWaveBuffer);
-  }
-  ghost.loadScene(DEMO_XML[currentDemoId] ?? DEMO_XML[0], currentDemoId);
-  const mainNames = session.getBodyNames();
-  const ghostNames = ghost.getBodyNames();
-  ghostIndex = ghostNames.map((name) => {
-    const i = mainNames.indexOf(name);
-    return i >= 0 || !ALIGNED_BODY_ALIAS[name] ? i : mainNames.indexOf(ALIGNED_BODY_ALIAS[name]);
-  });
-  const p = session.getParams();
-  p.controllerEnabled = false;
-  ghost.setParams(p);
-  ghost.reset();
-}
-
-function ghostSetParams(params) {
-  if (!ghost) return;
-  const p = ghost.getParams();
-  Object.assign(p, params, { controllerEnabled: false });
-  ghost.setParams(p);
-}
-
-const GHOST_TEL_KEYS = [
-  'time', 'eePosErrMm', 'eePosRmseMm', 'glassTiltDeg', 'wineSlopeX', 'wineSlopeY', 'wineRippleDeg',
-  'wineSpilled', 'glassFrictionUse', 'pendulumAngleDeg', 'dockingGapMm', 'dockingForceN',
-];
-
 function stopLoop() {
   if (timerId !== null) {
     clearInterval(timerId);
@@ -233,28 +176,8 @@ function captureFramePayload(rtf) {
   const telemetry = session.getTelemetry();
   const perturb = session.getPerturbState();
   const transfer = [bx.buffer, bq.buffer, gx.buffer, gm.buffer];
-  let ghostFrame = null;
-  if (ghost) {
-    // Ghost poses in the main session's body order (matched by name).
-    const srcX = ghost.getBodyXposView();
-    const srcQ = ghost.getBodyXquatView();
-    const gbx = new Float32Array(bx.length);
-    const gbq = new Float32Array(bq.length);
-    for (let i = 0; i < ghostIndex.length; i++) {
-      const b = ghostIndex[i];
-      if (b < 0) continue;
-      for (let k = 0; k < 3; k++) gbx[3 * b + k] = srcX[3 * i + k];
-      for (let k = 0; k < 4; k++) gbq[4 * b + k] = srcQ[4 * i + k];
-    }
-    const gt = ghost.getTelemetry();
-    const tel = {};
-    for (const k of GHOST_TEL_KEYS) tel[k] = gt[k];
-    ghostFrame = { bodyXpos: gbx, bodyXquat: gbq, telemetry: tel };
-    transfer.push(gbx.buffer, gbq.buffer);
-  }
   return {
     payload: {
-      ghost: ghostFrame,
       perturb,
       loadId: currentLoadId,
       bodyXpos: bx,
@@ -270,7 +193,6 @@ function captureFramePayload(rtf) {
 
 function sendSceneLoaded() {
   const bodyNames = session.getBodyNames();
-  const bodyRootIds = session.getBodyRootIds();
   const geoms = session.getGeoms();
   const refPath = session.getReferencePath(240);
   const params = session.getParams();
@@ -281,7 +203,6 @@ function sendSceneLoaded() {
       loadId: currentLoadId,
       demoId: currentDemoId,
       bodyNames,
-      bodyRootIds,
       geoms,
       refPath,
       params,
@@ -315,7 +236,6 @@ function tickLoop() {
 
     const t0 = performance.now();
     session.stepBatch(nSteps);
-    if (ghost) ghost.stepBatch(nSteps);
     const stepMs = performance.now() - t0;
     const simMs = nSteps * dt * 1000.0;
     const instRtf = stepMs > 0.05 ? Math.min(speed, simMs / Math.max(stepMs, wallDt * 1000.0)) : speed;
@@ -348,8 +268,6 @@ onmessage = async (e) => {
       postMessage({ type: 'status', loadId: currentLoadId, text: 'Building scene…' });
       session.clearPerturb();
       await loadMainScene(currentDemoId, msg.paramsOverride);
-      if (msg.ghost !== undefined) ghostWanted = Boolean(msg.ghost);
-      syncGhostScene();
       accumSim = 0;
       rtfSmooth = speed;
       // Wait for main thread to finish GLB/mesh setup and initial t=0 render before stepping
@@ -379,26 +297,13 @@ onmessage = async (e) => {
         msg.params.beamTaskMode !== p.beamTaskMode;
       Object.assign(p, msg.params);
       session.setParams(p);
-      ghostSetParams(msg.params);
       if (trackingChanged || uprightChanged || dockCaseChanged || beamModeChanged) {
         if (!beamModeChanged) session.reset();
-        if (ghost && !beamModeChanged) ghost.reset();
         lastWall = performance.now();
         lastFrameSent = lastWall;
         accumSim = 0;
         postMessage({ type: 'refPath', loadId: currentLoadId, refPath: session.getReferencePath(240) });
       }
-      sendFrame(rtfSmooth);
-    } else if (msg.type === 'setGhost' && session) {
-      // Restart both runs so the ghost sees exactly the same base motion from t = 0.
-      ghostWanted = Boolean(msg.enabled);
-      session.clearPerturb();
-      session.reset();
-      syncGhostScene();
-      lastWall = performance.now();
-      lastFrameSent = lastWall;
-      accumSim = 0;
-      postMessage({ type: 'refPath', loadId: currentLoadId, refPath: session.getReferencePath(240) });
       sendFrame(rtfSmooth);
     } else if (msg.type === 'setRunning') {
       running = Boolean(msg.running);
@@ -411,10 +316,6 @@ onmessage = async (e) => {
       session.clearPerturb();
       session.reset();
       session.setTeleopAxes(0, 0, 0, 0, 0, 0);
-      if (ghost) {
-        ghost.reset();
-        ghost.setTeleopAxes(0, 0, 0, 0, 0, 0);
-      }
       lastWall = performance.now();
       lastFrameSent = lastWall;
       accumSim = 0;
@@ -423,44 +324,34 @@ onmessage = async (e) => {
     } else if (msg.type === 'setTeleopAxes' && session) {
       const a = (msg.axes || [0, 0, 0, 0, 0, 0]).map((v) => Number(v) || 0);
       session.setTeleopAxes(a[0], a[1], a[2], a[3], a[4], a[5]);
-      if (ghost) ghost.setTeleopAxes(a[0], a[1], a[2], a[3], a[4], a[5]);
     } else if (msg.type === 'teleopHome' && session) {
       session.triggerTeleopHome();
-      if (ghost) ghost.triggerTeleopHome();
     } else if (msg.type === 'teleopBrake' && session) {
       session.triggerTeleopBrake();
-      if (ghost) ghost.triggerTeleopBrake();
     } else if (msg.type === 'stepOnce' && session) {
       running = false;
       session.stepBatch(10);
-      if (ghost) ghost.stepBatch(10);
       sendFrame(0);
     } else if (msg.type === 'captureStep' && session) {
       // Media capture (tools/record_media.mjs): advance exactly n physics steps, then one frame.
       running = false;
       const n = Math.max(0, Math.floor(Number(msg.steps) || 0));
-      if (n > 0) {
-        session.stepBatch(n);
-        if (ghost) ghost.stepBatch(n);
-      }
+      if (n > 0) session.stepBatch(n);
       sendFrame(0);
       postMessage({ type: 'captureDone', id: msg.id });
     } else if (msg.type === 'pendulumImpulse' && session) {
       session.injectPendulumImpulse(Number(msg.deltaOmega) || 0);
-      if (ghost) ghost.injectPendulumImpulse(Number(msg.deltaOmega) || 0);
       sendFrame(rtfSmooth);
     } else if (msg.type === 'ballNudge' && session) {
       session.injectBallNudge(Number(msg.dvx) || 0.2, Number(msg.dvy) || -0.15);
       sendFrame(rtfSmooth);
     } else if (msg.type === 'basePulse' && session) {
-      for (const s of ghost ? [session, ghost] : [session]) {
-        s.injectBasePulse(
-          Number(msg.fx) || 15,
-          Number(msg.fy) || 0,
-          Number(msg.fz) || 0,
-          Number(msg.duration) || 0.25
-        );
-      }
+      session.injectBasePulse(
+        Number(msg.fx) || 15,
+        Number(msg.fy) || 0,
+        Number(msg.fz) || 0,
+        Number(msg.duration) || 0.25
+      );
     } else if (msg.type === 'perturbStart' && session) {
       const l = msg.local || [0, 0, 0];
       const t = msg.target || [0, 0, 0];

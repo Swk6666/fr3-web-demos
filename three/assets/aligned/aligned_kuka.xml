@@ -135,7 +135,7 @@
       <geom name="wine_bowl_collision" type="ellipsoid" pos="0 0 0.086" size="0.0495 0.0495 0.043" group="3" mass="0" rgba="0 0 0 0" contype="2" conaffinity="1" />
       <site name="cup_foot_site" pos="0 0 0" size=".0015" group="4" rgba="0 0 0 0" />
       <site name="cup_rim_site" pos="0 0 0.132" size=".0015" group="4" rgba="0 0 0 0" />
-    </body>
+    <body name="wine_fixed" pos="0 0 0.100000958"><inertial pos="0 0 0" mass="0.0576201361" diaginertia="1e-09 1e-09 1e-09" /></body><body name="wine_slosh" pos="0 0 0.0975779226"><joint name="wine_slosh_ball" type="ball" damping="2.96711121e-05" limited="true" range="0 1.48352986" /><inertial pos="0 0 -0.0329709895" mass="0.116528923" diaginertia="1.26676978e-07 1.26676978e-07 1.26676978e-07" /></body></body>
     <body name="main_base" pos="0 0 0" quat="1 0 0 0">
       <body name="digui" pos="-1.1895     -0.56500047  0.19499977" quat="-2.59736365e-06  2.59734136e-06  7.07109160e-01  7.07104840e-01">
         <body name="kuka" pos="0 .1 0" quat="0.707107 -0.707107 0 0">

@@ -238,8 +238,6 @@ body.nogl .loading-banner { background: linear-gradient(180deg, #fbfbfd 0%, #ece
 }
 .readout-unit { font-size: 17px; font-weight: 500; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
 .readout-sub { font-size: 12px; color: var(--faint); margin-top: 2px; }
-.readout.baseline .readout-value { color: var(--danger); }
-.readout.baseline .readout-tag { color: var(--danger); background: rgba(215, 0, 21, 0.08); }
 
 /* Glass friction budget (Still Wine / Tracking) */
 .readout-extra { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); min-width: 190px; }
@@ -252,9 +250,6 @@ body.nogl .loading-banner { background: linear-gradient(180deg, #fbfbfd 0%, #ece
 .readout-extra.tipped .rx-fill { background: var(--danger); width: 100% !important; }
 #rxWineRow { margin-top: 7px; }
 #rxWineRow.bad .rx-val { color: var(--danger); }
-.rx-ghost { margin-top: 6px; font-size: 11px; color: #6e6e73; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
-.rx-ghost::before { content: ""; width: 12px; height: 0; border-top: 2px dashed #8e8e93; flex: none; }
-.ghost-toggle { margin-top: 10px; font-size: 13px; }
 
 .hud-divider { width: 1px; margin: 5px 3px; background: rgba(0, 0, 0, 0.10); }
 .push-btn { display: inline-flex; align-items: center; gap: 5px; }
@@ -544,7 +539,6 @@ body.nogl .loading-banner { background: linear-gradient(180deg, #fbfbfd 0%, #ece
   font-weight: 500;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
-#segCtrl button.active[data-on="0"] { color: var(--danger); }
 
 #taskControls:not(:empty) { margin-bottom: 12px; }
 

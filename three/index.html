@@ -50,7 +50,6 @@
           <div class="rx-bar"><div class="rx-fill" id="rxFill"></div></div>
           <div class="rx-note" id="rxNote">Held by friction only</div>
           <div class="rx-row" id="rxWineRow"><span>Wine surface tilt</span><span class="rx-val" id="rxWine">–</span></div>
-          <div class="rx-ghost hidden" id="rxGhost"></div>
         </div>
       </div>
 
@@ -131,15 +130,6 @@
       </section>
 
       <section class="card">
-        <div class="field">
-          <span class="field-label">Controller</span>
-          <div class="seg" id="segCtrl">
-            <button data-on="1" class="active" id="segCtrlOurs">Ours</button>
-            <button data-on="0" id="segCtrlBase">Fixed-base</button>
-          </div>
-          <label class="toggle ghost-toggle hidden" id="rowGhost"><input type="checkbox" id="chkGhost" /> Show fixed-base ghost</label>
-          <p class="hint" id="ctrlHint">Fixed-base: a conventional controller that assumes the base is still. The ghost runs it under the same base motion.</p>
-        </div>
         <div class="field" id="rowBaseMode">
           <span class="field-label">Base motion</span>
           <div class="seg" id="segBase">

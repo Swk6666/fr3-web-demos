@@ -271,10 +271,6 @@ const robotGroup = new THREE.Group();
 scene.add(robotGroup);
 const overlayGroup = new THREE.Group();
 scene.add(overlayGroup);
-// Translucent copy of the arm + glass driven by the fixed-base baseline (worker ghost session)
-const ghostGroup = new THREE.Group();
-ghostGroup.visible = false;
-scene.add(ghostGroup);
 
 // --- Streaming Download Progress Tracker ---
 const loadBarFill = document.getElementById('loadBarFill');
@@ -888,7 +884,7 @@ function syncOverlayVisibility() {
   rowOverlayDeflect5x.classList.toggle('hidden', !isBeam);
 }
 
-function buildSceneMeshes(bodyNames, geoms, refPath, bodyRootIds = []) {
+function buildSceneMeshes(bodyNames, geoms, refPath) {
   while (robotGroup.children.length) robotGroup.remove(robotGroup.children[0]);
   while (overlayGroup.children.length) overlayGroup.remove(overlayGroup.children[0]);
   bodyGroups = [];
@@ -1020,9 +1016,10 @@ function buildSceneMeshes(bodyNames, geoms, refPath, bodyRootIds = []) {
   glassBodyId = bodyNames.indexOf('wine_glass');
   link0BodyId = bodyNames.indexOf('link0');
   mainWine = glassBodyId >= 0 && bodyGroups[glassBodyId].children.length
-    ? createWine(bodyGroups[glassBodyId], false)
+    ? createWine(bodyGroups[glassBodyId])
     : null;
-  buildGhost(bodyNames, bodyRootIds);
+  const trayBodyId = bodyNames.indexOf('revj_cup');
+  mainSplash = mainWine ? createSplash(trayBodyId >= 0 ? bodyGroups[trayBodyId] : null) : null;
   syncOverlayVisibility();
 }
 
@@ -1111,14 +1108,23 @@ function updateGlassContactOverlay(tel) {
   }
 }
 
-// --- Wine: first sloshing mode from the WASM model, drawn as the bowl volume under a clip plane ---
-// Inner bowl profile of the Rev J brandy glass in the glass body frame (z, r in m; 0.6 mm inset).
-const WINE_FILL_Z = 0.090;  // keep equal to WineModel::kFillZ
+// --- Wine: the WASM WineSlosh model (web_wine.hpp): an equivalent pendulum for the first sloshing
+// mode in the plant, a volume-conserving plane surface and the overflow at the rim. Drawn as the
+// bowl volume under the surface plane plus the plane-bowl section; spilled wine as droplets that
+// splash on the tray and the floor.
+// Inner bowl of the Rev J brandy glass in the glass body frame (z, r in mm), as in
+// tools/wine_slosh_modes.py GLASS_INNER_MM; drawn 0.6 mm inside the glass.
+const WINE_REST_Z = 0.090;   // wine_slosh_modes.py FILL_DEFAULT_MM
 const WINE_PROFILE = [
-  [53, 0], [54, 9], [56, 16], [60, 27.5], [64, 33.6], [68, 38.2], [72, 42.2], [76, 44.6], [80, 46.3],
-  [84, 46.9], [88, 46.6], [92, 45.9], [96, 45.0], [100, 43.3], [104, 41.0], [112, 37.4], [120, 34.3], [128, 31.0],
+  [55.00, 0.00], [55.02, 1.18], [55.24, 8.39], [55.59, 13.30], [56.01, 16.42], [56.62, 19.33],
+  [57.46, 22.03], [58.62, 24.85], [60.55, 28.64], [62.31, 31.63], [64.08, 34.22], [66.12, 36.70],
+  [68.25, 38.84], [71.02, 41.16], [73.89, 43.18], [76.91, 44.95], [79.44, 46.15], [81.48, 46.86],
+  [83.53, 47.29], [85.78, 47.49], [88.67, 47.43], [91.45, 47.08], [94.03, 46.49], [96.61, 45.63],
+  [100.71, 43.92], [107.59, 41.11], [114.89, 38.02], [122.07, 34.95], [128.70, 32.39], [132.00, 31.20],
 ].map(([z, r]) => [z / 1000, Math.max(0, r - 0.6) / 1000]);
-const WINE_SEG = 56;
+const WINE_BOTTOM_Z = WINE_PROFILE[0][0];
+const WINE_RIM_Z = WINE_PROFILE[WINE_PROFILE.length - 1][0];
+const WINE_SEG = 64;
 
 function wineRadiusAt(z) {
   const P = WINE_PROFILE;
@@ -1133,6 +1139,17 @@ function wineRadiusAt(z) {
   return 0;
 }
 
+// Inside the bowl section (glass frame): below the rim, above the bottom, within the wall.
+function wineInside(x, y, z) {
+  return z >= WINE_BOTTOM_Z && z <= WINE_RIM_Z && Math.hypot(x, y) <= wineRadiusAt(z);
+}
+
+// The same, continued above the rim inside the rim circle: where the plane rises over the rim the
+// surface is drawn at the rim height (the crest spilling over it).
+function wineInsideCapped(x, y, z) {
+  return z >= WINE_BOTTOM_Z && Math.hypot(x, y) <= wineRadiusAt(Math.min(z, WINE_RIM_Z));
+}
+
 // Red wine look: a liquid volume is darker where light crosses more of it. The body shell is
 // shaded by view-path thickness (|n.v|: deep garnet in the core, lighter translucent ruby at the
 // silhouette and near the surface) and by depth below the surface; the surface disc gets a light
@@ -1142,7 +1159,7 @@ const WINE_MID = new THREE.Color(0x980a2c);
 const WINE_EDGE = new THREE.Color(0xd92a4c);
 const WINE_SURF = new THREE.Color(0x86082c);
 
-function wineBodyMaterial(plane) {
+function wineBodyMaterial(plane, fill) {
   const mat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     roughness: 0.08,
@@ -1160,7 +1177,7 @@ function wineBodyMaterial(plane) {
     shader.uniforms.uWineCore = { value: WINE_CORE };
     shader.uniforms.uWineMid = { value: WINE_MID };
     shader.uniforms.uWineEdge = { value: WINE_EDGE };
-    shader.uniforms.uWineFill = { value: WINE_FILL_Z };
+    shader.uniforms.uWineFill = fill;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying float vWineZ;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWineZ = position.z;');
@@ -1185,18 +1202,13 @@ totalEmissiveRadiance += uWineEdge * 0.10 * (1.0 - wineThick);`);
   return mat;
 }
 
-function createWine(parent, ghostStyle = false) {
+function createWine(parent) {
   const pts = WINE_PROFILE.map(([z, r]) => new THREE.Vector2(r, z));
   const lathe = new THREE.LatheGeometry(pts, 64);
   lathe.rotateX(Math.PI / 2);
   const plane = new THREE.Plane();
-  const bodyMat = ghostStyle
-    ? new THREE.MeshPhysicalMaterial({
-      color: 0x9a5a66, roughness: 0.2, metalness: 0.0, transparent: true, opacity: 0.3,
-      side: THREE.DoubleSide, clippingPlanes: [plane], depthWrite: false,
-    })
-    : wineBodyMaterial(plane);
-  const body = new THREE.Mesh(lathe, bodyMat);
+  const fill = { value: WINE_REST_Z };
+  const body = new THREE.Mesh(lathe, wineBodyMaterial(plane, fill));
   body.renderOrder = 1;
   const surfGeo = new THREE.BufferGeometry();
   const pos = new Float32Array((WINE_SEG + 2) * 3);
@@ -1214,15 +1226,15 @@ function createWine(parent, ghostStyle = false) {
   surfGeo.setAttribute('color', new THREE.BufferAttribute(col, 4));
   surfGeo.setIndex(idx);
   const surfMat = new THREE.MeshPhysicalMaterial({
-    color: ghostStyle ? 0xb07580 : 0xffffff,
-    vertexColors: !ghostStyle,
+    color: 0xffffff,
+    vertexColors: true,
     roughness: 0.04,
     metalness: 0.0,
     clearcoat: 1.0,
     clearcoatRoughness: 0.03,
     envMapIntensity: 1.2,
     transparent: true,
-    opacity: ghostStyle ? 0.35 : 1.0,
+    opacity: 1.0,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -1231,110 +1243,263 @@ function createWine(parent, ghostStyle = false) {
   body.castShadow = false;
   surf.castShadow = false;
   parent.add(body, surf);
-  return { parent, body, surf, plane, pos, nrm, surfGeo };
+  return { parent, body, surf, plane, fill, pos, nrm, surfGeo };
 }
 
-// slope = (dz/dx, dz/dy) of the free surface in the glass frame; spilled hides the wine.
-function updateWine(w, slopeX, slopeY, spilled) {
+const wineN = new THREE.Vector3();
+const wineE1 = new THREE.Vector3();
+const wineE2 = new THREE.Vector3();
+const wineC = new THREE.Vector3();
+const wineP = new THREE.Vector3();
+
+// Surface plane z = z0 + sx x + sy y (glass frame, from WineSlosh), the wine below it. The section
+// with the (convex) bowl is star-shaped about any inner point: its centre C is the middle of the
+// chord along the slope direction, the boundary is found by bisection on rays from C.
+function updateWine(w, tel) {
   if (!w) return;
-  const show = !spilled;
+  const sx = tel.wineSlopeX || 0;
+  const sy = tel.wineSlopeY || 0;
+  const z0 = Number.isFinite(tel.wineSurfaceZ) ? tel.wineSurfaceZ : WINE_REST_Z;
+  const volume = Number.isFinite(tel.wineVolumeMl) ? tel.wineVolumeMl : 1;
+  const zAt = (x, y) => z0 + sx * x + sy * y;
+  // Chord of the section along the slope direction (u: signed distance from the axis).
+  const k = Math.hypot(sx, sy);
+  const cx = k > 1e-9 ? sx / k : 1;
+  const cy = k > 1e-9 ? sy / k : 0;
+  let uLo = Infinity;
+  let uHi = -Infinity;
+  for (let i = 0; i <= 96; i++) {
+    const u = -0.05 + (0.1 * i) / 96;
+    if (wineInside(u * cx, u * cy, z0 + k * u)) {
+      uLo = Math.min(uLo, u);
+      uHi = Math.max(uHi, u);
+    }
+  }
+  const show = volume > 0.3 && uLo <= uHi;
   w.body.visible = show;
   w.surf.visible = show;
   if (!show) return;
-  const inv = 1 / Math.hypot(slopeX, slopeY, 1);
-  // Keep the liquid below z = zf + sx x + sy y (Three.js clips the negative side of the plane)
-  w.plane.normal.set(slopeX * inv, slopeY * inv, -inv);
-  w.plane.constant = WINE_FILL_Z * inv;
+  const uc = 0.5 * (uLo + uHi);
+  wineC.set(uc * cx, uc * cy, z0 + k * uc);
+  const inv = 1 / Math.hypot(sx, sy, 1);
+  wineN.set(-sx * inv, -sy * inv, inv);
+  // Keep the liquid below the plane (Three.js clips the negative side): normal -n through C.
+  w.plane.normal.copy(wineN).negate();
+  w.plane.constant = wineN.dot(wineC);
   w.parent.updateMatrixWorld(true);
   w.plane.applyMatrix4(w.parent.matrixWorld);
+  w.fill.value = Math.min(WINE_RIM_Z, z0);
 
+  wineE1.set(1, 0, sx).normalize();
+  wineE2.crossVectors(wineN, wineE1);
   const { pos, nrm } = w;
-  pos[0] = 0; pos[1] = 0; pos[2] = WINE_FILL_Z;
+  pos[0] = wineC.x; pos[1] = wineC.y; pos[2] = wineC.z;
   for (let i = 0; i <= WINE_SEG; i++) {
     const phi = (2 * Math.PI * i) / WINE_SEG;
     const c = Math.cos(phi);
     const sn = Math.sin(phi);
-    const k = slopeX * c + slopeY * sn;
-    // Radius where the surface meets the bowl wall: rho = r(zf + k rho), by bisection
     let lo = 0;
-    let hi = 0.06;
-    if (hi - wineRadiusAt(WINE_FILL_Z + k * hi) < 0) lo = hi;
-    for (let it = 0; it < 22 && lo < hi; it++) {
+    let hi = 0.2;
+    for (let it = 0; it < 24; it++) {
       const mid = 0.5 * (lo + hi);
-      if (mid - wineRadiusAt(WINE_FILL_Z + k * mid) < 0) lo = mid; else hi = mid;
+      wineP.copy(wineC).addScaledVector(wineE1, mid * c).addScaledVector(wineE2, mid * sn);
+      if (wineInsideCapped(wineP.x, wineP.y, wineP.z)) lo = mid; else hi = mid;
     }
-    const rho = 0.5 * (lo + hi);
+    wineP.copy(wineC).addScaledVector(wineE1, lo * c).addScaledVector(wineE2, lo * sn);
     const o = 3 * (i + 1);
-    pos[o] = rho * c;
-    pos[o + 1] = rho * sn;
-    pos[o + 2] = WINE_FILL_Z + k * rho;
+    pos[o] = wineP.x;
+    pos[o + 1] = wineP.y;
+    pos[o + 2] = Math.min(zAt(wineP.x, wineP.y), WINE_RIM_Z);
   }
   for (let i = 0; i < WINE_SEG + 2; i++) {
-    nrm[3 * i] = -slopeX * inv;
-    nrm[3 * i + 1] = -slopeY * inv;
-    nrm[3 * i + 2] = inv;
+    nrm[3 * i] = wineN.x;
+    nrm[3 * i + 1] = wineN.y;
+    nrm[3 * i + 2] = wineN.z;
   }
   w.surfGeo.attributes.position.needsUpdate = true;
   w.surfGeo.attributes.normal.needsUpdate = true;
   w.surfGeo.computeBoundingSphere();
 }
 
+// --- Spilled wine: droplets from the crest (WineSlosh lip position / velocity / rim tangent, one
+// droplet per WINE_DROP_ML of the overflow), ballistic in the world frame on simulation time,
+// splashing into stains on the tray (they move with it) and the floor. Deterministic per run
+// (seeded generator, sim-time steps) so the recorded media repeat.
+const WINE_DROP_ML = 0.05;
+const WINE_DROP_MAX = 700;
+const WINE_STAIN_MAX = 320;
+const WINE_DROPS_PER_FRAME = 60;
+const TRAY_SURFACE_Z = -0.162;   // revj_cup tray_surface_site (body frame)
+const TRAY_RADIUS = 0.066;       // inside the cradle rim
+
+function wineRandom(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const wineDropMat = new THREE.MeshPhysicalMaterial({
+  color: 0x8a0c2a, roughness: 0.12, metalness: 0.0, clearcoat: 0.8, clearcoatRoughness: 0.05,
+  envMapIntensity: 1.1, transparent: true, opacity: 0.92,
+});
+const wineStainMat = new THREE.MeshStandardMaterial({
+  color: 0x5a0418, roughness: 0.25, metalness: 0.0, transparent: true, opacity: 0.88,
+  depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+});
+const wineStainGeo = new THREE.CircleGeometry(1, 18);
+
+function createSplash(trayGroup) {
+  const geo = new THREE.SphereGeometry(1, 10, 8);
+  const mesh = new THREE.InstancedMesh(geo, wineDropMat, WINE_DROP_MAX);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  mesh.count = 0;
+  mesh.frustumCulled = false;
+  overlayGroup.add(mesh);
+  const floorStains = new THREE.Group();
+  overlayGroup.add(floorStains);
+  const trayStains = new THREE.Group();
+  if (trayGroup) trayGroup.add(trayStains);
+  return {
+    mesh, floorStains, trayStains, trayGroup,
+    p: new Float32Array(3 * WINE_DROP_MAX), v: new Float32Array(3 * WINE_DROP_MAX),
+    r: new Float32Array(WINE_DROP_MAX), n: 0,
+    stains: [], lastSpilled: 0, lastTime: -1, carry: 0, rand: wineRandom(1),
+  };
+}
+
+function clearSplash(sp) {
+  sp.n = 0;
+  sp.mesh.count = 0;
+  for (const st of sp.stains) st.parent?.remove(st);
+  sp.stains = [];
+  sp.lastSpilled = 0;
+  sp.carry = 0;
+  sp.rand = wineRandom(1);
+}
+
+const splashM = new THREE.Matrix4();
+const splashQ = new THREE.Quaternion();
+const splashS = new THREE.Vector3();
+const splashV = new THREE.Vector3();
+const splashUp = new THREE.Vector3(0, 0, 1);
+const splashTrayInv = new THREE.Matrix4();
+const splashLocal = new THREE.Vector3();
+const splashPrev = new THREE.Vector3();
+
+function addStain(sp, group, x, y, z, radius) {
+  let st;
+  if (sp.stains.length >= WINE_STAIN_MAX) {
+    st = sp.stains.shift();
+    st.parent?.remove(st);
+  } else {
+    st = new THREE.Mesh(wineStainGeo, wineStainMat);
+    st.renderOrder = 3;
+  }
+  st.position.set(x, y, z);
+  st.scale.setScalar(radius);
+  group.add(st);
+  sp.stains.push(st);
+}
+
+function updateSplash(sp, tel) {
+  if (!sp) return;
+  const t = tel.time || 0;
+  const spilled = tel.wineSpilledMl || 0;
+  if (t < sp.lastTime - 0.05 || spilled < sp.lastSpilled - 1e-6) clearSplash(sp);
+  const dt = sp.lastTime >= 0 ? Math.min(Math.max(t - sp.lastTime, 0), 0.05) : 0;
+  sp.lastTime = t;
+  // Fly and land the drops already out.
+  if (sp.trayGroup) {
+    sp.trayGroup.updateMatrixWorld(true);
+    splashTrayInv.copy(sp.trayGroup.matrixWorld).invert();
+  }
+  let j = 0;
+  for (let i = 0; i < sp.n; i++) {
+    const o = 3 * i;
+    sp.v[o + 2] -= 9.81 * dt;
+    const x = sp.p[o] + sp.v[o] * dt;
+    const y = sp.p[o + 1] + sp.v[o + 1] * dt;
+    const z = sp.p[o + 2] + sp.v[o + 2] * dt;
+    let landed = false;
+    if (sp.trayGroup) {
+      // Crossing the tray plane (tray frame) during this step, inside the cradle rim.
+      splashPrev.set(sp.p[o], sp.p[o + 1], sp.p[o + 2]).applyMatrix4(splashTrayInv);
+      splashLocal.set(x, y, z).applyMatrix4(splashTrayInv);
+      if (splashPrev.z > TRAY_SURFACE_Z && splashLocal.z <= TRAY_SURFACE_Z) {
+        const u = (splashPrev.z - TRAY_SURFACE_Z) / (splashPrev.z - splashLocal.z);
+        const lx = splashPrev.x + u * (splashLocal.x - splashPrev.x);
+        const ly = splashPrev.y + u * (splashLocal.y - splashPrev.y);
+        if (Math.hypot(lx, ly) < TRAY_RADIUS) {
+          addStain(sp, sp.trayStains, lx, ly, TRAY_SURFACE_Z + 0.0004, 1.6 * sp.r[i] + 0.002 * sp.rand());
+          landed = true;
+        }
+      }
+    }
+    if (!landed && z <= 0.0) {
+      addStain(sp, sp.floorStains, x, y, 0.0008, 2.2 * sp.r[i] + 0.003 * sp.rand());
+      landed = true;
+    }
+    if (landed) continue;
+    const q = 3 * j;
+    sp.p[q] = x; sp.p[q + 1] = y; sp.p[q + 2] = z;
+    sp.v[q] = sp.v[o]; sp.v[q + 1] = sp.v[o + 1]; sp.v[q + 2] = sp.v[o + 2];
+    sp.r[j] = sp.r[i];
+    j++;
+  }
+  sp.n = j;
+  // New drops for this frame's overflow, each already in flight for a random part of the frame.
+  const lip = tel.wineLipPos;
+  const lv = tel.wineLipVel;
+  const lt = tel.wineLipTangent;
+  if (lip && lv && lt && spilled > sp.lastSpilled) {
+    sp.carry += (spilled - sp.lastSpilled) / WINE_DROP_ML;
+    const half = tel.wineLipHalfWidth || 0.004;
+    let emit = Math.min(Math.floor(sp.carry), WINE_DROPS_PER_FRAME);
+    sp.carry = Math.min(sp.carry - emit, 4 * WINE_DROPS_PER_FRAME);
+    const rnd = sp.rand;
+    while (emit-- > 0) {
+      let i = sp.n;
+      if (i >= WINE_DROP_MAX) i = Math.floor(rnd() * WINE_DROP_MAX); else sp.n++;
+      const along = (2 * rnd() - 1) * half;
+      const age = rnd() * dt;
+      for (let a = 0; a < 3; a++) {
+        let vel = lv[a] * (0.75 + 0.5 * rnd()) + 0.08 * (2 * rnd() - 1) + 0.2 * lt[a] * (2 * rnd() - 1);
+        let p = lip[a] + lt[a] * along + vel * age;
+        if (a === 2) {
+          p -= 4.905 * age * age;
+          vel -= 9.81 * age;
+        }
+        sp.v[3 * i + a] = vel;
+        sp.p[3 * i + a] = p;
+      }
+      sp.r[i] = 0.0014 + 0.0016 * rnd();
+    }
+  }
+  sp.lastSpilled = spilled;
+  for (let i = 0; i < sp.n; i++) {
+    const o = 3 * i;
+    splashV.set(sp.v[o], sp.v[o + 1], sp.v[o + 2]);
+    const speed = splashV.length();
+    if (speed > 1e-6) splashQ.setFromUnitVectors(splashUp, splashV.divideScalar(speed));
+    else splashQ.identity();
+    const stretch = 1 + Math.min(1.5, 0.35 * speed);
+    splashS.set(sp.r[i], sp.r[i], sp.r[i] * stretch);
+    splashM.compose(wineP.set(sp.p[o], sp.p[o + 1], sp.p[o + 2]), splashQ, splashS);
+    sp.mesh.setMatrixAt(i, splashM);
+  }
+  sp.mesh.count = sp.n;
+  sp.mesh.instanceMatrix.needsUpdate = true;
+}
+
 let mainWine = null;
-let ghostWine = null;
-let ghostBodies = [];
+let mainSplash = null;
 let glassBodyId = -1;
 let link0BodyId = -1;
-const GHOST_SKIP = new Set(['link0', 'transition_plate']);
-// Site-wide colour rule: the fixed-base baseline is red, here a translucent red ghost.
-const ghostMat = new THREE.MeshStandardMaterial({
-  color: 0xe4505a,
-  emissive: 0x5a0008,
-  roughness: 0.6,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.3,
-  depthWrite: false,
-});
-
-// Copy the meshes of the free-floating FR3 tree and the free glass for the baseline ghost.
-function buildGhost(bodyNames, bodyRootIds) {
-  while (ghostGroup.children.length) ghostGroup.remove(ghostGroup.children[0]);
-  ghostBodies = [];
-  ghostWine = null;
-  const l7 = bodyNames.indexOf('link7');
-  if (l7 < 0 || !bodyRootIds || !bodyRootIds.length) return;
-  const roots = new Set([bodyRootIds[l7]]);
-  if (glassBodyId >= 0) roots.add(bodyRootIds[glassBodyId]);
-  for (let b = 0; b < bodyNames.length; b++) {
-    if (!roots.has(bodyRootIds[b]) || GHOST_SKIP.has(bodyNames[b])) continue;
-    const src = bodyGroups[b];
-    if (!src || !src.children.length) continue;
-    const g = new THREE.Group();
-    for (const m of src.children) {
-      if (!m.isMesh) continue;
-      const c = new THREE.Mesh(m.geometry, ghostMat);
-      c.position.copy(m.position);
-      c.quaternion.copy(m.quaternion);
-      c.renderOrder = 3;
-      g.add(c);
-    }
-    ghostGroup.add(g);
-    ghostBodies.push({ b, g });
-    if (b === glassBodyId) ghostWine = createWine(g, true);
-  }
-}
-
-function applyGhostFrame(gf) {
-  const show = !!gf && ghostEnabled && !!currentParams.controllerEnabled && ghostBodies.length > 0;
-  ghostGroup.visible = show;
-  if (!show) return;
-  for (const { b, g } of ghostBodies) {
-    g.position.set(gf.bodyXpos[3 * b], gf.bodyXpos[3 * b + 1], gf.bodyXpos[3 * b + 2]);
-    g.quaternion.set(gf.bodyXquat[4 * b + 1], gf.bodyXquat[4 * b + 2], gf.bodyXquat[4 * b + 3], gf.bodyXquat[4 * b]);
-  }
-  const t = gf.telemetry || {};
-  updateWine(ghostWine, t.wineSlopeX || 0, t.wineSlopeY || 0, !!t.wineSpilled);
-}
 
 // World-fixed target ring around the glass foot (Still Wine) and a fading trail of the arm base.
 let targetRing = null;
@@ -1598,9 +1763,8 @@ function applyFrame(msg) {
   }
   updateGlassContactOverlay(telemetry);
   updatePerturbOverlay(msg.perturb);
-  updateWine(mainWine, telemetry.wineSlopeX || 0, telemetry.wineSlopeY || 0, !!telemetry.wineSpilled);
-  applyGhostFrame(msg.ghost);
-  telemetry.ghost = ghostGroup.visible && msg.ghost ? msg.ghost.telemetry : null;
+  updateWine(mainWine, telemetry);
+  updateSplash(mainSplash, telemetry);
   updateWorldOverlays(msg);
 
   if (trailLine && telemetry.eePos && (currentDemoId === 0 || currentDemoId === 1 || currentDemoId === 5)) {
@@ -1637,7 +1801,6 @@ const hudTime = document.getElementById('hudTime');
 const hudRtf = document.getElementById('hudRtf');
 const hudPhase = document.getElementById('hudPhase');
 const hudPhaseSep = document.getElementById('hudPhaseSep');
-const readoutEl = document.getElementById('readout');
 const readoutLabel = document.getElementById('readoutLabel');
 const readoutTag = document.getElementById('readoutTag');
 const readoutValue = document.getElementById('readoutValue');
@@ -1649,7 +1812,6 @@ const rxFill = document.getElementById('rxFill');
 const rxNote = document.getElementById('rxNote');
 const rxWine = document.getElementById('rxWine');
 const rxWineRow = document.getElementById('rxWineRow');
-const rxGhost = document.getElementById('rxGhost');
 let lastReadoutMs = 0;
 
 // RMS of a telemetry channel over the trailing window (seconds) of the plot history
@@ -1684,33 +1846,24 @@ function updateReadout(tel) {
     showToast(`Low level stopped (${alignedError}); restarted`);
   }
   lastAlignedError = alignedError;
-  const ours = !!currentParams.controllerEnabled;
-  readoutEl.classList.toggle('baseline', !ours);
-  readoutTag.textContent = ours ? (tel.aligned ? 'Ours · GRU + MOB' : 'Ours') : 'Fixed-base';
-  const g = tel.ghost;
+  readoutTag.textContent = tel.aligned ? 'Ours · GRU + MOB' : 'Ours';
   if (currentDemoId === 2) {
     readoutLabel.textContent = 'Pendulum angle';
     readoutValue.textContent = fixedNoNegZero(tel.pendulumAngleDeg, 1);
     readoutUnit.textContent = '°';
-    readoutSub.textContent = g
-      ? `Fixed-base: ${fixedNoNegZero(g.pendulumAngleDeg, 0)}°`
-      : DEMO_META[2].phaseNames[tel.phase] ?? '';
+    readoutSub.textContent = DEMO_META[2].phaseNames[tel.phase] ?? '';
   } else if (currentDemoId === 4) {
     readoutLabel.textContent = 'Docking gap';
     readoutValue.textContent = tel.dockingGapMm.toFixed(2);
     readoutUnit.textContent = 'mm';
-    readoutSub.textContent = g
-      ? `${tel.dockingSeated ? 'Seated' : 'Aligning'} · fixed-base gap ${g.dockingGapMm.toFixed(1)} mm`
-      : tel.dockingSeated ? 'Seated' : 'Aligning';
+    readoutSub.textContent = tel.dockingSeated ? 'Seated' : 'Aligning';
   } else {
     readoutLabel.textContent = 'End-effector error';
     readoutValue.textContent = windowRms((p) => p.eePosErrMm).toFixed(2);
     readoutUnit.textContent = 'mm';
     readoutSub.textContent = currentDemoId === 5
       ? `Base sway ${(tel.beamTipDispMm || 0).toFixed(0)} mm`
-      : g
-        ? `RMS over last 1 s · fixed-base ${windowRms((p) => (p.ghost ? p.ghost.eePosErrMm : 0)).toFixed(0)} mm`
-        : 'RMS over last 1 s';
+      : 'RMS over last 1 s';
   }
   updateGlassReadout(tel);
 }
@@ -1730,14 +1883,9 @@ function updateGlassReadout(tel) {
       ripple = Math.max(ripple, history[i].wineRippleDeg || 0);
     }
   }
-  rxWine.textContent = tel.wineSpilled ? 'Spilled' : `${ripple.toFixed(1)}°`;
+  const spilledMl = tel.wineSpilledMl || 0;
+  rxWine.textContent = spilledMl > 0.05 ? `${ripple.toFixed(1)}° · ${spilledMl.toFixed(1)} mL spilled` : `${ripple.toFixed(1)}°`;
   rxWineRow.classList.toggle('bad', !!tel.wineSpilled);
-  const g = tel.ghost;
-  rxGhost.classList.toggle('hidden', !g);
-  if (g) {
-    rxGhost.textContent = `Fixed-base: ${g.wineSpilled ? 'wine spilled' : `wine ${g.wineRippleDeg.toFixed(0)}°`}` +
-      `${g.glassTiltDeg > 25 ? ', glass tipped over' : `, friction ${(100 * (g.glassFrictionUse || 0)).toFixed(0)} %`}`;
-  }
   readoutExtra.classList.toggle('tipped', tipped);
   if (tipped) {
     rxFric.textContent = 'Tipped over';
@@ -2004,10 +2152,7 @@ function updateHudAndPlots(tel, rtf) {
   const C_STAT = '#a1a1a6';
   const C_SIGNAL = '#6e6e73';
   const STAT_DASH = [5, 3];
-  // Site-wide colour rule: blue is our controller, red the fixed-base baseline (ghost or switched off).
-  const C_RED = '#d70015';
-  const C_GHOST = C_RED;
-  const C_MAIN = currentParams.controllerEnabled ? C_BLUE : C_RED;
+  const C_MAIN = C_BLUE;
   // [colour, label, dashed?]: a dashed series gets a short dashed swatch instead of a dot.
   const legend = (items) =>
     items.map(([c, t, dashed]) => `<span><i class="${dashed ? 'dash' : 'dot'}" style="${dashed ? 'color' : 'background'}:${c}"></i>${t}</span>`).join('');
@@ -2024,29 +2169,13 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
       ['QP residual', tel.qpResidual >= 0 ? tel.qpResidual.toExponential(1) : 'fallback'],
     ];
-    if (tel.ghost) {
-      // Ours vs. the fixed-base ghost differ by orders of magnitude: log axis
-      const lg = (v) => Math.log10(Math.max(0.05, v));
-      chart1Title.textContent = 'End-effector error (mm, log scale)';
-      chart1Legend.innerHTML = legend([[C_MAIN, 'Ours'], [C_GHOST, 'Fixed-base', true]]);
-      series = [
-        { color: C_MAIN, digits: 2, get: (p) => lg(p.eePosErrMm), raw: (p) => p.eePosErrMm },
-        {
-          color: C_GHOST, digits: 1, dash: [4, 3],
-          get: (p) => (p.ghost ? lg(p.ghost.eePosErrMm) : null),
-          raw: (p) => (p.ghost ? p.ghost.eePosErrMm : null),
-        },
-      ];
-      chartOpts = { log: true, unit: 'mm' };
-    } else {
-      chart1Title.textContent = 'End-effector error (mm)';
-      chart1Legend.innerHTML = legend([[C_MAIN, 'Error'], [C_STAT, 'RMSE', true]]);
-      series = [
-        { color: C_MAIN, tag: '', digits: 2, get: (p) => p.eePosErrMm },
-        { color: C_STAT, tag: '', digits: 2, dash: STAT_DASH, get: (p) => p.eePosRmseMm },
-      ];
-      chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
-    }
+    chart1Title.textContent = 'End-effector error (mm)';
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Error'], [C_STAT, 'RMSE', true]]);
+    series = [
+      { color: C_MAIN, tag: '', digits: 2, get: (p) => p.eePosErrMm },
+      { color: C_STAT, tag: '', digits: 2, dash: STAT_DASH, get: (p) => p.eePosRmseMm },
+    ];
+    chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
   } else if (currentDemoId === 2) {
     boxes = [
       ['Angle', `${fixedNoNegZero(tel.pendulumAngleDeg, 1)}&deg;`],
@@ -2055,13 +2184,8 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Pendulum angle from upright (deg)';
-    chart1Legend.innerHTML = legend([[C_MAIN, 'Angle'], ['rgba(0, 0, 0, 0.16)', '±10° band']]
-      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base', true]] : []));
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Angle'], ['rgba(0, 0, 0, 0.16)', '±10° band']]);
     series = [{ color: C_MAIN, tag: '', digits: 1, breakJump: 180, get: (p) => p.pendulumAngleDeg }];
-    if (tel.ghost) {
-      series.push({ color: C_GHOST, digits: 1, dash: [4, 3], breakJump: 180,
-        get: (p) => (p.ghost ? p.ghost.pendulumAngleDeg : null) });
-    }
     chartOpts = {
       yRange: [-180, 180],
       unit: 'deg',
@@ -2093,15 +2217,11 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Docking gap (mm) and contact force (N)';
-    chart1Legend.innerHTML = legend([[C_MAIN, 'Gap'], [C_SIGNAL, 'Force']]
-      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base gap', true]] : []));
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Gap'], [C_SIGNAL, 'Force']]);
     series = [
       { color: C_MAIN, tag: '', digits: 2, get: (p) => p.dockingGapMm },
       { color: C_SIGNAL, tag: '', digits: 2, width: 1.3, get: (p) => p.dockingForceN },
     ];
-    if (tel.ghost) {
-      series.push({ color: C_GHOST, digits: 2, dash: [4, 3], get: (p) => (p.ghost ? p.ghost.dockingGapMm : null) });
-    }
     chartOpts = {
       includeZero: true,
       unit: 'mm / N',
@@ -2125,7 +2245,6 @@ let activeLoadId = 0;
 let isRunning = true;
 let lastAutoBaseMode = 0; // remembers Sinusoidal (0) vs Recorded Sea Wave (2) across Tab toggles
 let currentParams = {
-  controllerEnabled: true,
   movingSupport: true,
   supportScale: 1.0,
   kTrans: 200,
@@ -2152,19 +2271,7 @@ const btnPlayPause = document.getElementById('btnPlayPause');
 const btnReset = document.getElementById('btnReset');
 const btnStep = document.getElementById('btnStep');
 const selSpeed = document.getElementById('selSpeed');
-const segCtrlBtns = [...document.querySelectorAll('#segCtrl button')];
-const segCtrlBase = document.getElementById('segCtrlBase');
-const rowGhost = document.getElementById('rowGhost');
-const chkGhost = document.getElementById('chkGhost');
 const chkBaseTrail = document.getElementById('chkBaseTrail');
-const GHOST_DEMOS = new Set([0, 1, 2, 4]);
-// Ghost costs a second physics run: default on for Still Wine / Tracking on desktop only.
-const ghostChoice = {};
-let ghostEnabled = false;
-function ghostDefault(id) {
-  if (ghostChoice[id] !== undefined) return ghostChoice[id];
-  return !IS_SMALL_TOUCH && (id === 0 || id === 1);
-}
 const segBaseBtns = [...document.querySelectorAll('#segBase button')];
 const rowBaseMode = document.getElementById('rowBaseMode');
 const rowKukaMoving = document.getElementById('rowKukaMoving');
@@ -2239,18 +2346,7 @@ function captureTelemetry(tel) {
     glassTiltDeg: t.glassTiltDeg,
     wineSpilled: t.wineSpilled,
   });
-  return { ...pick(tel), ghost: tel.ghost ? pick(tel.ghost) : null };
-}
-
-function syncCtrlSeg() {
-  const on = !!currentParams.controllerEnabled;
-  for (const b of segCtrlBtns) b.classList.toggle('active', (b.dataset.on === '1') === on);
-  syncGhostRow();
-}
-
-// The fixed-base ghost runs next to our controller; with the baseline itself selected the toggle has no effect.
-function syncGhostRow() {
-  rowGhost.classList.toggle('hidden', !GHOST_DEMOS.has(currentDemoId) || !currentParams.controllerEnabled);
+  return pick(tel);
 }
 
 function syncBaseSeg() {
@@ -2264,7 +2360,6 @@ function syncBaseSeg() {
 let sceneAligned = false;
 
 function syncCommonInputs() {
-  syncCtrlSeg();
   for (const r of [rngKtrans, rngKrot]) {
     r.disabled = sceneAligned;
     r.title = sceneAligned ? 'GRU + MOB low level: SE(3) gains from the sim-accuracy scenario' : '';
@@ -2460,15 +2555,6 @@ btnTeleopBrake.onclick = () => {
 };
 
 chkOverlayPath.onchange = syncOverlayVisibility;
-chkGhost.onchange = () => {
-  ghostEnabled = chkGhost.checked;
-  ghostChoice[currentDemoId] = ghostEnabled;
-  history = [];
-  trailCount = 0;
-  baseTrailCount = 0;
-  lastTelemetryTime = -1;
-  worker.postMessage({ type: 'setGhost', enabled: ghostEnabled });
-};
 chkOverlayFrames.onchange = syncOverlayVisibility;
 chkOverlayForce.onchange = syncOverlayVisibility;
 chkOverlayStress.onchange = syncOverlayVisibility;
@@ -2569,12 +2655,6 @@ function renderTaskSpecificControls() {
   rowKukaScale.classList.toggle('hidden', isBeam);
   teleopCard.classList.toggle('hidden', isBeam);
   rowBaseMode.classList.toggle('hidden', isBeam);
-  segCtrlBase.textContent = 'Fixed-base';
-  syncGhostRow();
-  document.getElementById('ctrlHint').textContent = GHOST_DEMOS.has(currentDemoId)
-    ? 'Fixed-base: a conventional controller that assumes the base is still. The ghost runs it under the same base motion.'
-    : 'Fixed-base: a conventional controller that assumes the base is still.';
-  chkGhost.checked = ghostEnabled;
 
   const camLabels = { hero: 'Overview', ee: 'Close-up', top: 'Top' };
   document.querySelectorAll('.cam-btn[data-cam]').forEach((btn) => {
@@ -2786,12 +2866,10 @@ function selectDemo(id, extraOverrides = null) {
     ...(DEMO_META[resolvedId].paramsOverride || {}),
     ...(extraOverrides || {}),
   };
-  ghostEnabled = GHOST_DEMOS.has(resolvedId) && ghostDefault(resolvedId);
   worker.postMessage({
     type: 'loadDemo',
     loadId,
     demoId: resolvedId,
-    ghost: ghostEnabled,
     paramsOverride: Object.keys(mergedOverride).length ? mergedOverride : null,
   });
 }
@@ -2814,7 +2892,7 @@ worker.onmessage = async (e) => {
     }
     syncCommonInputs();
     renderTaskSpecificControls();
-    buildSceneMeshes(msg.bodyNames, msg.geoms, msg.refPath, msg.bodyRootIds);
+    buildSceneMeshes(msg.bodyNames, msg.geoms, msg.refPath);
     if (msg.initialFrame) {
       applyFrame(msg.initialFrame);
     }
@@ -3008,21 +3086,6 @@ btnStep.onclick = () => {
 };
 selSpeed.onchange = () => worker.postMessage({ type: 'setSpeed', speed: Number(selSpeed.value) });
 
-for (const b of segCtrlBtns) {
-  b.onclick = () => {
-    currentParams.controllerEnabled = b.dataset.on === '1';
-    syncCtrlSeg();
-    lastReadoutMs = 0;
-    if ([0, 1, 2, 4, 5].includes(currentDemoId)) {
-      // Ours runs the elastic sim-accuracy plant, the fixed-base baseline the rigid scene: reload.
-      const keep = ['controllerEnabled', 'teleopTarget', 'trackingMode', 'movingSupport', 'supportScale',
-        'beamTaskMode', 'beamDisturber', 'beamYoungGpa', 'dockingCase', 'pendulumStartUpright'];
-      selectDemo(currentDemoId, Object.fromEntries(keep.map((k) => [k, currentParams[k]])));
-      return;
-    }
-    worker.postMessage({ type: 'setParams', params: { controllerEnabled: currentParams.controllerEnabled } });
-  };
-}
 advancedCard.addEventListener('toggle', () => {
   if (advancedCard.open && history.length) updateHudAndPlots(history.pop(), 1);
 });
@@ -3070,7 +3133,6 @@ function buildShareUrl() {
   q.set('demo', String(currentDemoId));
   const bm = Number(currentParams.teleopTarget || 0);
   if (currentDemoId !== 5) q.set('base', bm === 2 ? 'wave' : bm === 1 ? 'kbd' : 'sine');
-  if (!currentParams.controllerEnabled) q.set('ctrl', '0');
   if (currentDemoId === 1) q.set('track', String(Number(currentParams.trackingMode || 0)));
   if (currentDemoId === 4) q.set('dock', String(Number(currentParams.dockingCase || 0)));
   if (currentDemoId === 5) {
@@ -3078,7 +3140,6 @@ function buildShareUrl() {
     q.set('beamMode', String(Number(currentParams.beamTaskMode || 0)));
     q.set('disturber', currentParams.beamDisturber ? '1' : '0');
   }
-  if (GHOST_DEMOS.has(currentDemoId)) q.set('ghost', ghostEnabled ? '1' : '0');
   const r = (v) => String(Math.round(v * 1000) / 1000);
   q.set('view', [...camera.position.toArray(), ...controls.target.toArray()].map(r).concat([Math.round(camera.fov)]).join(','));
   return u.toString();
@@ -3094,7 +3155,7 @@ btnShare.onclick = async () => {
   }
 };
 
-// --- First-visit tour (three steps, skippable, remembered in localStorage) ---
+// --- First-visit tour (two steps, skippable, remembered in localStorage) ---
 const TOUR_KEY = 'deer-wbc-tour-v1';
 const tourEl = document.getElementById('tour');
 const tourRing = document.getElementById('tourRing');
@@ -3104,10 +3165,6 @@ const tourStepEl = document.getElementById('tourStep');
 const tourNext = document.getElementById('tourNext');
 const tourSkip = document.getElementById('tourSkip');
 const TOUR_STEPS = [
-  {
-    anchor: '#segCtrl',
-    text: 'Compare our controller with a conventional <b>fixed-base</b> one. The translucent arm is the fixed-base controller under the same base motion.',
-  },
   {
     anchor: '#btnPushMode',
     text: IS_SMALL_TOUCH
@@ -3244,7 +3301,7 @@ function animate() {
 }
 animate();
 
-// Boot: parse URL deep-link query params (?demo=0|1|2|4&base=sine|wave|kbd&cam=hero|...&ctrl=1|0&overlays=1|0&track=0|1&dock=0|1|2&sidebar=0|1)
+// Boot: parse URL deep-link query params (?demo=0|1|2|4|5&base=sine|wave|kbd&cam=hero|...&overlays=1|0&track=0|1&dock=0|1|2&sidebar=0|1)
 const qs = new URLSearchParams(window.location.search);
 const rawDemo = Number(qs.get('demo'));
 const initDemo = rawDemo === 3 ? 4 : DEMO_META[rawDemo] ? rawDemo : 0;
@@ -3258,9 +3315,6 @@ if (baseParam === 'wave' || baseParam === 'seawave') {
   bootOverrides.teleopTarget = 1;
 } else if (baseParam === 'sine') {
   bootOverrides.teleopTarget = 0;
-}
-if (qs.has('ctrl')) {
-  bootOverrides.controllerEnabled = qs.get('ctrl') !== '0';
 }
 if (qs.has('track') && initDemo === 1) {
   bootOverrides.trackingMode = Number(qs.get('track')) === 1 ? 1 : 0;
@@ -3281,7 +3335,6 @@ if (initDemo === 5) {
     bootOverrides.beamDisturber = qs.get('disturber') === '1';
   }
 }
-if (qs.has('ghost')) ghostChoice[initDemo] = qs.get('ghost') !== '0';
 // Recordings: the pose-frame triads and force arrows read as debug graphics in a clip.
 if (captureMode || qs.get('frames') === '0') chkOverlayFrames.checked = false;
 if (captureMode) chkOverlayForce.checked = false;
