@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "setup_id": "tray_water",
+  "model_id": "fixed_211_tau_j_full_mob_20261102",
+  "feature_count": 211,
+  "dynamics_role": "frozen_feature_sidecar",
+  "output_domain": "filtered_residual",
+  "checkpoint_sha256": "5cecd4e031d6c8c93fced9776921118d5875ccfe76fb7e17a41c3fa1e7877b67",
+  "online_link7_sha256": "94072c5be73a2ef229181dd3eba4cb262b19414f2f7fd08bccd4d78666c22305",
+  "online_baseline_sha256": "34024ebead194d205851432a6b79317637334d45bbeeb8caf34376aa9b33c69f",
+  "input_policy": "live",
+  "validation_status": "offline_candidate_only",
+  "files": {
+    "calibrated_dynamics.bin": "f2489244262a7bb526da59c57949c1a49e25f64298a24284ea1ac2e1f7209057",
+    "calibrated_dynamics_test_vectors.bin": "1d7570800ec10824279823e487233d3b5a978557d511e67d0219a43ed5b7a047",
+    "feedforward_v2_feedback_blind_e2e_test_vectors.bin": "f8d361dc7299f463615df656e150d84f8f8b7fc5d6f173f42b62de930e158ad2",
+    "feedforward_v2_feedback_blind_gru_native.bin": "09bd388a0670ed9b9a0ef1c78dbf0bd5d9e12a357c96d1ecfaec6ce393625e69",
+    "feedforward_v2_feedback_blind_gru_test_vectors.bin": "02c27f5bc2d372b3813e5944e020012c1cf18ec2eac28ef199c55da08d1654db",
+    "fr3.xml": "9163ba7f5b9aa95ff959128d2cf646e26cf891e032aa952dbb21b274b0da4121",
+    "manifest.json": "801388fa6b59d266ea63c1435a1de7cd0e8a211653d3d91c8ffae8565d47fde6"
+  }
+}

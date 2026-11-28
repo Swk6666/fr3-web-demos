@@ -1,0 +1,227 @@
+<mujoco model="fr3">
+  <compiler angle="radian" meshdir="assets"/>
+
+  <option integrator="implicitfast" timestep="0.001"/>
+
+  <visual>
+    <!-- Compact native viewer frames; sizes are relative to mean body size. -->
+    <scale framelength="0.15" framewidth="0.003"/>
+  </visual>
+
+  <default>
+    <default class="fr3">
+      <!-- Overwritten in joints 5, 6, and 7. -->
+      <joint damping="0.21" armature="0.195" frictionloss="1.137"/>
+      <position inheritrange="1"/>
+      <default class="visual">
+        <geom type="mesh" group="2" contype="0" conaffinity="0"/>
+      </default>
+      <default class="collision">
+        <geom type="mesh" group="3" mass="0" density="0"/>
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4"/>
+    </default>
+  </default>
+
+  <asset>
+    <material name="black" rgba=".2 .2 .2 1"/>
+    <material name="white" rgba="1 1 1 1"/>
+    <material name="red" rgba="1 0.072272 0.039546 1"/>
+    <material name="gray" rgba="0.863156 0.863156 0.863157 1"/>
+    <material name="button_green" rgba="0.102241 0.571125 0.102242 1"/>
+    <material name="button_red" rgba="0.520996 0.008023 0.013702 1"/>
+    <material name="button_blue" rgba="0.024157 0.445201 0.737911 1"/>
+
+    <mesh file="link0_0.obj"/>
+    <mesh file="link0_1.obj"/>
+    <mesh file="link0_2.obj"/>
+    <mesh file="link0_3.obj"/>
+    <mesh file="link0_4.obj"/>
+    <mesh file="link0_5.obj"/>
+    <mesh file="link0_6.obj"/>
+    <mesh file="link1.obj"/>
+    <mesh file="link2.obj"/>
+    <mesh file="link3_0.obj"/>
+    <mesh file="link3_1.obj"/>
+    <mesh file="link4_0.obj"/>
+    <mesh file="link4_1.obj"/>
+    <mesh file="link5_0.obj"/>
+    <mesh file="link5_1.obj"/>
+    <mesh file="link5_2.obj"/>
+    <mesh file="link6_0.obj"/>
+    <mesh file="link6_1.obj"/>
+    <mesh file="link6_2.obj"/>
+    <mesh file="link6_3.obj"/>
+    <mesh file="link6_4.obj"/>
+    <mesh file="link6_5.obj"/>
+    <mesh file="link6_6.obj"/>
+    <mesh file="link6_7.obj"/>
+    <mesh file="link7_0.obj"/>
+    <mesh file="link7_1.obj"/>
+    <mesh file="link7_2.obj"/>
+    <mesh file="link7_3.obj"/>
+
+    <mesh name="link0_coll" file="link0.stl"/>
+    <mesh name="link1_coll" file="link1.stl"/>
+    <mesh name="link2_coll" file="link2.stl"/>
+    <mesh name="link3_coll" file="link3.stl"/>
+    <mesh name="link4_coll" file="link4.stl"/>
+    <mesh name="link5_coll" file="link5.stl"/>
+    <mesh name="link6_coll" file="link6.stl"/>
+    <mesh name="link7_coll" file="link7.stl"/>
+    <!-- BEGIN subassemble1 assets -->
+    <mesh name="subassemble1_component_01" file="subassemble1/component_01.obj" />
+    <material name="subassemble1_component_01_material" rgba="0.04 0.25 0.8 1" specular="0.25" shininess="0.3" />
+    <material name="subassemble1_mocap_marker_white" rgba="1 1 1 1" specular="0.1" shininess="0.1" />
+    <mesh name="subassemble1_component_03" file="subassemble1/component_03.obj" />
+    <mesh name="subassemble1_component_03_visual_mesh" file="subassemble1/component_03_visual.obj" />
+    <texture name="subassemble1_component_03_palette" type="2d" file="assets/subassemble1/component_03_palette.png" />
+    <material name="subassemble1_component_03_material" texture="subassemble1_component_03_palette" rgba="1 1 1 1" texuniform="false" specular="0.25" shininess="0.3" />
+    <mesh name="subassemble1_component_04" file="subassemble1/component_04.obj" />
+    <mesh name="subassemble1_component_04_visual_mesh" file="subassemble1/component_04_visual.obj" />
+    <texture name="subassemble1_component_04_palette" type="2d" file="assets/subassemble1/component_04_palette.png" />
+    <material name="subassemble1_component_04_material" texture="subassemble1_component_04_palette" rgba="1 1 1 1" texuniform="false" specular="0.25" shininess="0.3" />
+    <mesh name="subassemble1_component_05" file="subassemble1/component_05.obj" />
+    <material name="subassemble1_component_05_material" rgba="1 1 1 1" specular="0.25" shininess="0.3" />
+    <mesh name="subassemble1_component_06" file="subassemble1/component_06.obj" />
+    <material name="subassemble1_component_06_material" rgba="1 1 1 1" specular="0.25" shininess="0.3" />
+    <mesh name="subassemble1_component_09" file="subassemble1/component_09.obj" />
+    <mesh name="subassemble1_component_09_visual_mesh" file="subassemble1/component_09_visual.obj" />
+    <texture name="subassemble1_component_09_palette" type="2d" file="assets/subassemble1/component_09_palette.png" />
+    <material name="subassemble1_component_09_material" texture="subassemble1_component_09_palette" rgba="1 1 1 1" texuniform="false" specular="0.25" shininess="0.3" />
+    <!-- END subassemble1 assets -->
+    <!-- BEGIN SolidWorks tray assets -->
+    <mesh name="tray_mesh" file="tray/tray_assembly.obj"/>
+    <texture name="tray_palette" type="2d" file="assets/tray/tray_palette.png"/>
+    <material name="tray_material" texture="tray_palette" texuniform="false" rgba="1 1 1 1" specular="0.3" shininess="0.25"/>
+    <!-- END SolidWorks tray assets -->
+  </asset>
+
+  <worldbody>
+    <body name="base" childclass="fr3">
+      <body name="fr3_link0">
+        <geom mesh="link0_0" material="black" class="visual"/>
+        <geom mesh="link0_1" material="white" class="visual"/>
+        <geom mesh="link0_2" material="white" class="visual"/>
+        <geom mesh="link0_3" material="white" class="visual"/>
+        <geom mesh="link0_4" material="white" class="visual"/>
+        <geom mesh="link0_5" material="red" class="visual"/>
+        <geom mesh="link0_6" material="black" class="visual"/>
+        <geom name="fr3_link0_collision" mesh="link0_coll" class="collision"/>
+        <body name="fr3_link1" pos="0 0 0.333">
+          <inertial pos="4.128e-07 -0.0181251 -0.0386036" quat="0.998098 -0.0605364 0.00380499 0.0110109" mass="2.92747"
+            diaginertia="0.0239286 0.0227246 0.00610634"/>
+          <joint name="fr3_joint1" axis="0 0 1" range="-2.7437 2.7437" actuatorfrcrange="-87 87"/>
+          <geom name="fr3_link1_collision" class="collision" mesh="link1_coll"/>
+          <geom material="white" mesh="link1" class="visual"/>
+          <body name="fr3_link2" quat="1 -1 0 0">
+            <inertial pos="0.00318289 -0.0743222 0.00881461" quat="0.502599 0.584437 -0.465998 0.434366" mass="2.93554"
+              diaginertia="0.0629567 0.0411924 0.0246371"/>
+            <joint name="fr3_joint2" axis="0 0 1" range="-1.7837 1.7837" actuatorfrcrange="-87 87"/>
+            <geom material="white" mesh="link2" class="visual"/>
+            <geom name="fr3_link2_collision" class="collision" mesh="link2_coll"/>
+            <body name="fr3_link3" pos="0 -0.316 0" quat="1 1 0 0">
+              <inertial pos="0.0407016 -0.00482006 -0.0289731" quat="0.921025 -0.244161 0.155272 0.260745" mass="2.2449"
+                diaginertia="0.0267409 0.0189869 0.0171587"/>
+              <joint name="fr3_joint3" axis="0 0 1" range="-2.9007 2.9007" actuatorfrcrange="-87 87"/>
+              <geom mesh="link3_0" material="white" class="visual"/>
+              <geom mesh="link3_1" material="black" class="visual"/>
+              <geom name="fr3_link3_collision" class="collision" mesh="link3_coll"/>
+              <body name="fr3_link4" pos="0.0825 0 0" quat="1 1 0 0">
+                <inertial pos="-0.0459101 0.0630493 -0.00851879" quat="0.438018 0.803311 0.00937812 0.403414"
+                  mass="2.6156" diaginertia="0.05139 0.0372717 0.0160047"/>
+                <joint name="fr3_joint4" axis="0 0 1" range="-3.0421 -0.1518" actuatorfrcrange="-87 87"/>
+                <geom mesh="link4_0" material="white" class="visual"/>
+                <geom mesh="link4_1" material="black" class="visual"/>
+                <geom name="fr3_link4_collision" class="collision" mesh="link4_coll"/>
+                <body name="fr3_link5" pos="-0.0825 0.384 0" quat="1 -1 0 0">
+                  <inertial pos="-0.00160396 0.0292536 -0.0972966" quat="0.919031 0.125604 0.0751531 -0.366003"
+                    mass="2.32712" diaginertia="0.0579335 0.0449144 0.0130634"/>
+                  <joint name="fr3_joint5" axis="0 0 1" range="-2.8065 2.8065" actuatorfrcrange="-12 12"
+                    armature="0.074" frictionloss="0.763"/>
+                  <geom mesh="link5_0" material="white" class="visual"/>
+                  <geom mesh="link5_1" material="white" class="visual"/>
+                  <geom mesh="link5_2" material="black" class="visual"/>
+                  <geom name="fr3_link5_collision" class="collision" mesh="link5_coll"/>
+                  <body name="fr3_link6" quat="1 1 0 0">
+                    <inertial pos="0.0597131 -0.0410295 -0.0101693" quat="0.621301 0.552665 0.510011 0.220081"
+                      mass="1.81704" diaginertia="0.0175039 0.0161123 0.00193529"/>
+                    <joint name="fr3_joint6" axis="0 0 1" range="0.5445 4.5169" actuatorfrcrange="-12 12"
+                      armature="0.074" frictionloss="0.44"/>
+                    <geom mesh="link6_0" material="button_green" class="visual"/>
+                    <geom mesh="link6_1" material="white" class="visual"/>
+                    <geom mesh="link6_2" material="white" class="visual"/>
+                    <geom mesh="link6_3" material="gray" class="visual"/>
+                    <geom mesh="link6_4" material="button_red" class="visual"/>
+                    <geom mesh="link6_5" material="white" class="visual"/>
+                    <geom mesh="link6_6" material="black" class="visual"/>
+                    <geom mesh="link6_7" material="button_blue" class="visual"/>
+                    <geom name="fr3_link6_collision" class="collision" mesh="link6_coll"/>
+                    <body name="fr3_link7" pos="0.088 0 0" quat="1 1 0 0">
+                      <inertial pos="0.00452258 0.00862619 -0.0161633" quat="0.727579 0.0978688 -0.24906 0.63168" mass="0.627143" diaginertia="0.000223836 0.000223642 5.64132e-07" />
+                      <joint name="fr3_joint7" axis="0 0 1" range="-3.0159 3.0159" actuatorfrcrange="-12 12" armature="0.074" frictionloss="0.248" />
+                      <geom mesh="link7_0" material="black" class="visual" />
+                      <geom mesh="link7_1" material="white" class="visual" />
+                      <geom mesh="link7_2" material="white" class="visual" />
+                      <geom mesh="link7_3" material="black" class="visual" />
+                      <geom name="fr3_link7_collision" class="collision" mesh="link7_coll" />
+                      <site name="attachment_site" pos="0 0 0.107" />
+                      <!--MTi-630 Fig. 7 display frame; unchanged assembled pose, expressed directly in fr3_link7.-->
+                      <!--Visualization only. Fig. 9 nominal measurement center remains housing C=(6.90, 2.64, 7.70) mm.-->
+                      <site name="imu_cad_site" pos="-0.020753584193315584 -0.0015202872188668642 0.10962236685613409" quat="0.92387964516879384 -6.0084837121961114e-17 -1.450576286728279e-16 -0.38268316038569516" />
+                      <!--MTi-630 Fig. 9 nominal measurement center: housing C=(6.90, 2.64, 7.70) mm.-->
+                      <!--CAD prior expressed in fr3_link7; official sensor axes, not a measured calibration.-->
+                      <site name="imu_measurement_site" pos="0.010253046891908727 0.00063640671973487061 0.11676" quat="0.92387964516879384 -6.0084837121961114e-17 -1.450576286728279e-16 -0.38268316038569516" size="0.001" rgba="1 0.7 0.1 1" />
+                      <!-- BEGIN SolidWorks tray geoms -->
+                      <!-- Fixed payload: CAD estimate from payload_materials.json; no joints, one visual geom. -->
+                      <geom name="tray_visual" mesh="tray_mesh" class="visual" material="tray_material" mass="0" density="0" pos="0 0 0.13900000000000001" xyaxes="0.70710678118654746 0.70710678118654746 0 0.70710678118654746 -0.70710678118654746 0" />
+                      <site name="tray_mount_site" pos="0 0 0.139" xyaxes="0.707106781187 0.707106781187 0 0.707106781187 -0.707106781187 0" size="0.002" rgba="0 0 0 0" />
+                      <site name="tray_surface_site" pos="0.102530483272 0.102530483272 0.133" xyaxes="0.707106781187 0.707106781187 0 0.707106781187 -0.707106781187 0" size="0.002" rgba="0 0 0 0" />
+                      <!-- END SolidWorks tray geoms -->
+                      <!-- BEGIN subassemble1 body -->
+                      <site name="subassemble1_mount_site" pos="0 0 0.107" xyaxes="-0.70710678118650971 -0.70710678118658543 0 0.70710678118658543 -0.70710678118650971 0" />
+                      <geom name="subassemble1_component_01_visual" mesh="subassemble1_component_01" class="visual" mass="0" density="0" material="subassemble1_component_01_material" pos="-5.8878467200580238e-17 -3.1554436208840472e-30 0.11" xyaxes="-0.70710678118650971 -0.70710678118658543 0 0.70710678118658543 -0.70710678118650971 0" />
+                      <geom name="subassemble1_component_01_collision" mesh="subassemble1_component_01" class="collision" pos="-5.8878467200580238e-17 -3.1554436208840472e-30 0.11" xyaxes="-0.70710678118650971 -0.70710678118658543 0 0.70710678118658543 -0.70710678118650971 0" mass="0" density="0" />
+                      <geom name="subassemble1_mocap_marker_base" type="cylinder" pos="0.042426406871195067 -0.042426406871190578 0.109" size="0.009 0.001" class="visual" mass="0" density="0" material="subassemble1_mocap_marker_white" xyaxes="-0.70710678118650971 -0.70710678118658543 0 0.70710678118658543 -0.70710678118650971 0" />
+                      <geom name="subassemble1_mocap_marker_ball" type="sphere" pos="0.042426406871195067 -0.042426406871190578 0.10349999999999999" size="0.005" class="visual" mass="0" density="0" material="subassemble1_mocap_marker_white" xyaxes="-0.70710678118650971 -0.70710678118658543 0 0.70710678118658543 -0.70710678118650971 0" />
+                      <site name="mocap_marker_site" pos="0.042426406871195067 -0.042426406871190578 0.099000000000000005" size="0.001" rgba="1 1 1 0" xyaxes="-0.70710678118650971 -0.70710678118658543 0 0.70710678118658543 -0.70710678118650971 0" />
+                      <geom name="subassemble1_component_03_visual" mesh="subassemble1_component_03_visual_mesh" class="visual" mass="0" density="0" material="subassemble1_component_03_material" pos="-7.0711780350673546e-05 7.0715216396819331e-05 0.11939999999999999" xyaxes="0.70710719751443285 -0.70710636485841738 2.1777205407196227e-16 1.993244886948712e-16 -1.0865165029354228e-16 -1" />
+                      <geom name="subassemble1_component_03_collision" mesh="subassemble1_component_03" class="collision" pos="-7.0711780350673546e-05 7.0715216396819331e-05 0.11939999999999999" xyaxes="0.70710719751443285 -0.70710636485841738 2.1777205407196227e-16 1.993244886948712e-16 -1.0865165029354228e-16 -1" mass="0" density="0" />
+                      <geom name="subassemble1_component_04_visual" mesh="subassemble1_component_04_visual_mesh" class="visual" mass="0" density="0" material="subassemble1_component_04_material" pos="-7.0590599300967793e-05 7.083641078255898e-05 0.11939999999999999" xyaxes="0.70710719681316436 -0.70710636555968653 8.6532177720485058e-12 8.0842909922065238e-13 -1.1429075074836444e-11 -1" />
+                      <geom name="subassemble1_component_04_collision" mesh="subassemble1_component_04" class="collision" pos="-7.0590599300967793e-05 7.083641078255898e-05 0.11939999999999999" xyaxes="0.70710719681316436 -0.70710636555968653 8.6532177720485058e-12 8.0842909922065238e-13 -1.1429075074836444e-11 -1" mass="0" density="0" />
+                      <geom name="subassemble1_component_05_visual" mesh="subassemble1_component_05" class="visual" mass="0" density="0" material="subassemble1_component_05_material" pos="-0.01106365919128845 -0.010922245139331443 0.1195356712419" xyaxes="-0.70710719751443218 0.70710636485841805 -2.1777205407196227e-16 -0.0061705887940623266 -0.0061705960602648994 -0.99996192306417131" />
+                      <geom name="subassemble1_component_05_collision" mesh="subassemble1_component_05" class="collision" pos="-0.01106365919128845 -0.010922245139331443 0.1195356712419" xyaxes="-0.70710719751443218 0.70710636485841805 -2.1777205407196227e-16 -0.0061705887940623266 -0.0061705960602648994 -0.99996192306417131" mass="0" density="0" />
+                      <geom name="subassemble1_component_06_visual" mesh="subassemble1_component_06" class="visual" mass="0" density="0" material="subassemble1_component_06_material" pos="0.010922235630585142 0.011063675572122695 0.1195356712419" xyaxes="0.70710719751443285 -0.70710636485841738 2.1777205407196227e-16 0.0061705887940626284 0.0061705960602645975 -0.99996192306417131" />
+                      <geom name="subassemble1_component_06_collision" mesh="subassemble1_component_06" class="collision" pos="0.010922235630585142 0.011063675572122695 0.1195356712419" xyaxes="0.70710719751443285 -0.70710636485841738 2.1777205407196227e-16 0.0061705887940626284 0.0061705960602645975 -0.99996192306417131" mass="0" density="0" />
+                      <geom name="subassemble1_component_09_visual" mesh="subassemble1_component_09_visual_mesh" class="visual" mass="0" density="0" material="subassemble1_component_09_material" pos="0.0015556349186095254 0.016404877323386566 0.11" xyaxes="-0.86145766316466921 -0.50782939514650716 5.1071689547689391e-12 0.50782939514650716 -0.86145766316466921 1.025622295029787e-11" />
+                      <geom name="subassemble1_component_09_collision" mesh="subassemble1_component_09" class="collision" pos="0.0015556349186095254 0.016404877323386566 0.11" xyaxes="-0.86145766316466921 -0.50782939514650716 5.1071689547689391e-12 0.50782939514650716 -0.86145766316466921 1.025622295029787e-11" mass="0" density="0" />
+                      <!-- END subassemble1 body -->
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position class="fr3" name="fr3_joint1" joint="fr3_joint1" kp="4500" kv="450"/>
+    <position class="fr3" name="fr3_joint2" joint="fr3_joint2" kp="4500" kv="450"/>
+    <position class="fr3" name="fr3_joint3" joint="fr3_joint3" kp="3500" kv="350"/>
+    <position class="fr3" name="fr3_joint4" joint="fr3_joint4" kp="3500" kv="350"/>
+    <position class="fr3" name="fr3_joint5" joint="fr3_joint5" kp="2000" kv="200"/>
+    <position class="fr3" name="fr3_joint6" joint="fr3_joint6" kp="2000" kv="200"/>
+    <position class="fr3" name="fr3_joint7" joint="fr3_joint7" kp="2000" kv="200"/>
+  </actuator>
+
+  <contact>
+    <exclude body1="fr3_link0" body2="fr3_link1"/>
+  </contact>
+
+  <keyframe>
+    <key name="home" qpos="0 0 0 -1.57079 0 1.57079 -0.7853" ctrl="0 0 0 -1.57079 0 1.57079 -0.7853"/>
+  </keyframe>
+</mujoco>

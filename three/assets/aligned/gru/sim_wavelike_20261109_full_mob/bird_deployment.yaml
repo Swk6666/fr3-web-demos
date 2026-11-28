@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "setup_id": "tray_water",
+  "model_id": "sim_wavelike_20261109_full_mob",
+  "feature_count": 211,
+  "dynamics_role": "frozen_feature_sidecar",
+  "output_domain": "filtered_residual",
+  "checkpoint_sha256": "30bd6bdb417a61add97ed7ce660b15c40816d1af45854bd9f2963a0c0e6522e3",
+  "online_link7_sha256": "94072c5be73a2ef229181dd3eba4cb262b19414f2f7fd08bccd4d78666c22305",
+  "online_baseline_sha256": "34024ebead194d205851432a6b79317637334d45bbeeb8caf34376aa9b33c69f",
+  "input_policy": "live",
+  "validation_status": "simulation_only_not_for_real_robot",
+  "files": {
+    "calibrated_dynamics.bin": "ef93157b512933fc0fc877f0fbc7c52d6f532fe34aee912b3c01bd47ebff48f8",
+    "calibrated_dynamics_test_vectors.bin": "a37cc13af0e44b8ad413ef27c1b36a6ec17a68c1bcf1a2f36b4a916400c4bf29",
+    "feedforward_v2_feedback_blind_e2e_test_vectors.bin": "a0569be1b2da80a0d2eb5137474e36942c2873a321ab9e79a699c73278c23b4c",
+    "feedforward_v2_feedback_blind_gru_native.bin": "1a87cc7c14040cebfc48e159a980f190286ffabfe0b43ba2640cd07df9c3eaa3",
+    "feedforward_v2_feedback_blind_gru_test_vectors.bin": "43fbaa4325f28104b40b9b401b454d6a0b66264d870f1ba45ed9c81cfc53e99d",
+    "fr3.xml": "874c65d9bf1e37d7a3a9113f59d87e6cf88a6f1194d46f6b30563e14f67b182e",
+    "manifest.json": "42b3c825df4957f09d0771236492e346d00c5e9d4e1cf9f7015ed6eba6b16cef"
+  }
+}

@@ -1,8 +1,19 @@
 // Dedicated Web Worker: runs MuJoCo 4.0.1 + SE(3) Impedance + ProxQP at 1 kHz inside WASM.
+// Still Wine (0) and Tracking (1) run the codex/sim-accuracy low level (WASM AlignedRunner: joint
+// sensors, link estimator, GRU, friction shaping, full MOB, SE3, QP on the elastic LuGre plant,
+// exported by simulation/web/tools/export_sim_scene.py); their fixed-base baseline and the other
+// demos keep the rigid scenes below.
 import createFr3SimModule from './wasm/fr3_sim_wasm.js';
 
 let Module = null;
 let session = null;
+// Ghost: a second session running the fixed-base baseline under the same base motion, stepped in
+// lockstep with the main session (same disturbances, no mouse push) and drawn translucent.
+let ghost = null;
+let ghostWanted = false;
+const GHOST_DEMOS = new Set([0, 1, 2, 4]);
+const assetBuffers = new Map();
+let seaWaveBuffer = null;
 let running = true;
 let speed = 1.0;
 let timerId = null;
@@ -11,6 +22,12 @@ let accumSim = 0;
 let loadedAssets = false;
 let currentDemoId = 0;
 let currentLoadId = 0;
+// Demos on the codex/sim-accuracy low level -> exported scene (export_sim_scene.py SCENES).
+const ALIGNED_DEMOS = new Map([[0, 'kuka'], [1, 'kuka'], [4, 'docking'], [5, 'beam']]);
+const alignedScenes = new Map();   // scene -> { xml, document } once its assets are in the session
+let currentAligned = false;
+// Ghost body i -> main body index by name (the aligned plant has extra rotor bodies).
+let ghostIndex = null;
 
 const PHYSICS_ASSETS = [
   'physics_hold.xml',
@@ -71,16 +88,16 @@ async function fetchUint8WithProgress(url, onChunk) {
 
 async function ensureInit() {
   if (!Module) {
-    postMessage({ type: 'status', text: 'Downloading MuJoCo 4.0.1 + ProxQP WASM…' });
+    postMessage({ type: 'status', text: 'Loading simulation…' });
     const wasmBytes = await fetchUint8WithProgress('./wasm/fr3_sim_wasm.wasm', (loaded, total) => {
       postMessage({ type: 'progress', key: 'wasm', loaded, total });
     });
-    postMessage({ type: 'status', text: 'Compiling WebAssembly physics kernel…' });
+    postMessage({ type: 'status', text: 'Preparing physics…' });
     Module = await createFr3SimModule({ wasmBinary: wasmBytes });
     session = new Module.WasmSimSession();
   }
   if (!loadedAssets) {
-    postMessage({ type: 'status', text: 'Loading physics models, collision meshes & sea-wave profile…' });
+    postMessage({ type: 'status', text: 'Loading models…' });
     const allFiles = [...PHYSICS_ASSETS, 'sea_wave_kuka.bin'];
     const perLoaded = new Map();
     const perTotal = new Map();
@@ -106,14 +123,95 @@ async function ensureInit() {
     );
     for (const [fname, buf] of results) {
       if (fname === 'sea_wave_kuka.bin') {
+        seaWaveBuffer = buf;
         session.loadSeaWave(buf);
       } else {
+        assetBuffers.set(fname, buf);
         session.addAsset(fname, buf);
       }
     }
     loadedAssets = true;
   }
 }
+
+// An aligned scene (plant XML + exported document) and its GRU bundle, fetched once per scene.
+async function ensureAligned(scene) {
+  if (alignedScenes.has(scene)) return alignedScenes.get(scene);
+  postMessage({ type: 'status', loadId: currentLoadId, text: 'Loading GRU + MOB low level…' });
+  const base = './assets/aligned';
+  const response = await fetch(`${base}/aligned_${scene}.json`);
+  if (!response.ok) throw new Error(`aligned_${scene}.json: HTTP ${response.status}`);
+  const documentText = await response.text();
+  const doc = JSON.parse(documentText);
+  const xml = await fetchUint8WithProgress(`${base}/${doc.xml}`, () => {});
+  session.addAsset(doc.xml, xml);
+  assetBuffers.set(doc.xml, xml);
+  await Promise.all(doc.gru.files.map(async (f) => {
+    const bytes = await fetchUint8WithProgress(`${base}/${doc.gru.directory}/${f.name}`, () => {});
+    session.writeFile(`${doc.gru.mount}/${f.name}`, bytes);
+  }));
+  const entry = { xml: doc.xml, document: documentText };
+  alignedScenes.set(scene, entry);
+  return entry;
+}
+
+async function loadMainScene(demoId, override) {
+  const wantAligned = ALIGNED_DEMOS.has(demoId) && !(override && override.controllerEnabled === false);
+  currentAligned = false;
+  if (wantAligned) {
+    try {
+      const a = await ensureAligned(ALIGNED_DEMOS.get(demoId));
+      session.loadAlignedScene(a.xml, a.document, demoId);
+      currentAligned = true;
+    } catch (err) {
+      console.error('[SimWorker] aligned low level unavailable, using the rigid scene:', err);
+    }
+  }
+  if (!currentAligned) session.loadScene(DEMO_XML[demoId] ?? DEMO_XML[0], demoId);
+  if (override) {
+    const p = session.getParams();
+    Object.assign(p, override);
+    session.setParams(p);
+    session.reset();
+  }
+}
+
+// (Re)build the ghost for the current scene from the main session's parameters, baseline on.
+function syncGhostScene() {
+  const want = ghostWanted && GHOST_DEMOS.has(currentDemoId);
+  if (!want) {
+    if (ghost) {
+      ghost.delete();
+      ghost = null;
+    }
+    return;
+  }
+  if (!ghost) {
+    ghost = new Module.WasmSimSession();
+    for (const [fname, buf] of assetBuffers) ghost.addAsset(fname, buf);
+    if (seaWaveBuffer) ghost.loadSeaWave(seaWaveBuffer);
+  }
+  ghost.loadScene(DEMO_XML[currentDemoId] ?? DEMO_XML[0], currentDemoId);
+  const mainNames = session.getBodyNames();
+  const ghostNames = ghost.getBodyNames();
+  ghostIndex = ghostNames.map((name) => mainNames.indexOf(name));
+  const p = session.getParams();
+  p.controllerEnabled = false;
+  ghost.setParams(p);
+  ghost.reset();
+}
+
+function ghostSetParams(params) {
+  if (!ghost) return;
+  const p = ghost.getParams();
+  Object.assign(p, params, { controllerEnabled: false });
+  ghost.setParams(p);
+}
+
+const GHOST_TEL_KEYS = [
+  'time', 'eePosErrMm', 'eePosRmseMm', 'glassTiltDeg', 'wineSlopeX', 'wineSlopeY', 'wineRippleDeg',
+  'wineSpilled', 'glassFrictionUse', 'pendulumAngleDeg', 'dockingGapMm', 'dockingForceN',
+];
 
 function stopLoop() {
   if (timerId !== null) {
@@ -128,8 +226,31 @@ function captureFramePayload(rtf) {
   const gx = new Float32Array(session.getGeomXposView());
   const gm = new Float32Array(session.getGeomXmatView());
   const telemetry = session.getTelemetry();
+  const perturb = session.getPerturbState();
+  const transfer = [bx.buffer, bq.buffer, gx.buffer, gm.buffer];
+  let ghostFrame = null;
+  if (ghost) {
+    // Ghost poses in the main session's body order (matched by name).
+    const srcX = ghost.getBodyXposView();
+    const srcQ = ghost.getBodyXquatView();
+    const gbx = new Float32Array(bx.length);
+    const gbq = new Float32Array(bq.length);
+    for (let i = 0; i < ghostIndex.length; i++) {
+      const b = ghostIndex[i];
+      if (b < 0) continue;
+      for (let k = 0; k < 3; k++) gbx[3 * b + k] = srcX[3 * i + k];
+      for (let k = 0; k < 4; k++) gbq[4 * b + k] = srcQ[4 * i + k];
+    }
+    const gt = ghost.getTelemetry();
+    const tel = {};
+    for (const k of GHOST_TEL_KEYS) tel[k] = gt[k];
+    ghostFrame = { bodyXpos: gbx, bodyXquat: gbq, telemetry: tel };
+    transfer.push(gbx.buffer, gbq.buffer);
+  }
   return {
     payload: {
+      ghost: ghostFrame,
+      perturb,
       loadId: currentLoadId,
       bodyXpos: bx,
       bodyXquat: bq,
@@ -138,12 +259,13 @@ function captureFramePayload(rtf) {
       telemetry,
       rtf,
     },
-    transfer: [bx.buffer, bq.buffer, gx.buffer, gm.buffer],
+    transfer,
   };
 }
 
 function sendSceneLoaded() {
   const bodyNames = session.getBodyNames();
+  const bodyRootIds = session.getBodyRootIds();
   const geoms = session.getGeoms();
   const refPath = session.getReferencePath(240);
   const params = session.getParams();
@@ -154,9 +276,11 @@ function sendSceneLoaded() {
       loadId: currentLoadId,
       demoId: currentDemoId,
       bodyNames,
+      bodyRootIds,
       geoms,
       refPath,
       params,
+      aligned: currentAligned,
       initialFrame: payload,
     },
     transfer
@@ -186,6 +310,7 @@ function tickLoop() {
 
     const t0 = performance.now();
     session.stepBatch(nSteps);
+    if (ghost) ghost.stepBatch(nSteps);
     const stepMs = performance.now() - t0;
     const simMs = nSteps * dt * 1000.0;
     const instRtf = stepMs > 0.05 ? Math.min(speed, simMs / Math.max(stepMs, wallDt * 1000.0)) : speed;
@@ -215,15 +340,11 @@ onmessage = async (e) => {
       currentLoadId = Number(msg.loadId) || 0;
       await ensureInit();
       currentDemoId = msg.demoId;
-      const xml = DEMO_XML[currentDemoId] ?? DEMO_XML[0];
-      postMessage({ type: 'status', loadId: currentLoadId, text: `Compiling scene (${xml})…` });
-      session.loadScene(xml, currentDemoId);
-      if (msg.paramsOverride) {
-        const p = session.getParams();
-        Object.assign(p, msg.paramsOverride);
-        session.setParams(p);
-        session.reset();
-      }
+      postMessage({ type: 'status', loadId: currentLoadId, text: 'Building scene…' });
+      session.clearPerturb();
+      await loadMainScene(currentDemoId, msg.paramsOverride);
+      if (msg.ghost !== undefined) ghostWanted = Boolean(msg.ghost);
+      syncGhostScene();
       accumSim = 0;
       rtfSmooth = speed;
       // Wait for main thread to finish GLB/mesh setup and initial t=0 render before stepping
@@ -253,13 +374,26 @@ onmessage = async (e) => {
         msg.params.beamTaskMode !== p.beamTaskMode;
       Object.assign(p, msg.params);
       session.setParams(p);
+      ghostSetParams(msg.params);
       if (trackingChanged || uprightChanged || dockCaseChanged || beamModeChanged) {
         if (!beamModeChanged) session.reset();
+        if (ghost && !beamModeChanged) ghost.reset();
         lastWall = performance.now();
         lastFrameSent = lastWall;
         accumSim = 0;
         postMessage({ type: 'refPath', loadId: currentLoadId, refPath: session.getReferencePath(240) });
       }
+      sendFrame(rtfSmooth);
+    } else if (msg.type === 'setGhost' && session) {
+      // Restart both runs so the ghost sees exactly the same base motion from t = 0.
+      ghostWanted = Boolean(msg.enabled);
+      session.clearPerturb();
+      session.reset();
+      syncGhostScene();
+      lastWall = performance.now();
+      lastFrameSent = lastWall;
+      accumSim = 0;
+      postMessage({ type: 'refPath', loadId: currentLoadId, refPath: session.getReferencePath(240) });
       sendFrame(rtfSmooth);
     } else if (msg.type === 'setRunning') {
       running = Boolean(msg.running);
@@ -269,44 +403,58 @@ onmessage = async (e) => {
     } else if (msg.type === 'setSpeed') {
       speed = Math.max(0.1, Math.min(3.0, Number(msg.speed) || 1.0));
     } else if (msg.type === 'reset' && session) {
+      session.clearPerturb();
       session.reset();
       session.setTeleopAxes(0, 0, 0, 0, 0, 0);
+      if (ghost) {
+        ghost.reset();
+        ghost.setTeleopAxes(0, 0, 0, 0, 0, 0);
+      }
       lastWall = performance.now();
       lastFrameSent = lastWall;
       accumSim = 0;
       postMessage({ type: 'refPath', loadId: currentLoadId, refPath: session.getReferencePath(240) });
       sendFrame(rtfSmooth);
     } else if (msg.type === 'setTeleopAxes' && session) {
-      const a = msg.axes || [0, 0, 0, 0, 0, 0];
-      session.setTeleopAxes(
-        Number(a[0]) || 0,
-        Number(a[1]) || 0,
-        Number(a[2]) || 0,
-        Number(a[3]) || 0,
-        Number(a[4]) || 0,
-        Number(a[5]) || 0
-      );
+      const a = (msg.axes || [0, 0, 0, 0, 0, 0]).map((v) => Number(v) || 0);
+      session.setTeleopAxes(a[0], a[1], a[2], a[3], a[4], a[5]);
+      if (ghost) ghost.setTeleopAxes(a[0], a[1], a[2], a[3], a[4], a[5]);
     } else if (msg.type === 'teleopHome' && session) {
       session.triggerTeleopHome();
+      if (ghost) ghost.triggerTeleopHome();
     } else if (msg.type === 'teleopBrake' && session) {
       session.triggerTeleopBrake();
+      if (ghost) ghost.triggerTeleopBrake();
     } else if (msg.type === 'stepOnce' && session) {
       running = false;
       session.stepBatch(10);
+      if (ghost) ghost.stepBatch(10);
       sendFrame(0);
     } else if (msg.type === 'pendulumImpulse' && session) {
       session.injectPendulumImpulse(Number(msg.deltaOmega) || 0);
+      if (ghost) ghost.injectPendulumImpulse(Number(msg.deltaOmega) || 0);
       sendFrame(rtfSmooth);
     } else if (msg.type === 'ballNudge' && session) {
       session.injectBallNudge(Number(msg.dvx) || 0.2, Number(msg.dvy) || -0.15);
       sendFrame(rtfSmooth);
     } else if (msg.type === 'basePulse' && session) {
-      session.injectBasePulse(
-        Number(msg.fx) || 15,
-        Number(msg.fy) || 0,
-        Number(msg.fz) || 0,
-        Number(msg.duration) || 0.25
-      );
+      for (const s of ghost ? [session, ghost] : [session]) {
+        s.injectBasePulse(
+          Number(msg.fx) || 15,
+          Number(msg.fy) || 0,
+          Number(msg.fz) || 0,
+          Number(msg.duration) || 0.25
+        );
+      }
+    } else if (msg.type === 'perturbStart' && session) {
+      const l = msg.local || [0, 0, 0];
+      const t = msg.target || [0, 0, 0];
+      session.setPerturb(Number(msg.body) | 0, +l[0], +l[1], +l[2], +t[0], +t[1], +t[2]);
+    } else if (msg.type === 'perturbTarget' && session) {
+      const t = msg.target || [0, 0, 0];
+      session.setPerturbTarget(+t[0], +t[1], +t[2]);
+    } else if (msg.type === 'perturbEnd' && session) {
+      session.clearPerturb();
     } else if (msg.type === 'beamStrike' && session) {
       session.injectBeamStrike(
         Number(msg.fy) || 0,

@@ -36,37 +36,37 @@ function getCameraPresetsForDemo(demoId) {
 
 const DEMO_META = {
   0: {
-    title: '1. Floating-Base Brandy Cup Hold',
-    desc: '3030 aluminum mobile base & Franka Control cabinet + flat-bottom brandy cradle with free 6-DOF 330 mL wine glass, wrist IMU & 3 mocap spheres (J7 = +45°). 1 kHz SE(3) + ProxQP rejects KUKA sinusoidal or 110 s recorded sea-wave disturbances.',
-    phaseNames: { 0: 'HOLDING' },
+    title: 'Still Wine',
+    desc: 'Stabilizing a free-standing glass of red wine in the world frame under unknown moving\u2011base disturbances — zero spills, minimal ripples.',
+    phaseNames: { 0: 'Holding' },
     paramsOverride: { kTrans: 200, kRot: 200 },
     cam: { ...CAMERA_PRESETS.hero, preset: 'hero' },
   },
   1: {
-    title: '2. Trajectory Tracking (Brandy Cup)',
-    desc: 'Continuous C² vertical YZ Figure-8 + Circle or horizontal Line + XY Circle tracked at tray_surface_site (J7 = +45°) while the free 6-DOF 330 mL brandy wine glass rides upright on the moving support.',
-    phaseNames: { 0: 'TRACKING' },
+    title: 'Tracking',
+    desc: 'The end effector traces a taiji (yin-yang) symbol and a circle in world space, with the glass on board, while the base keeps moving.',
+    phaseNames: { 0: 'Tracking' },
     paramsOverride: { kTrans: 200, kRot: 200, trackingMode: 0 },
     cam: { pos: [0.68, 0.52, 2.70], target: [-0.46, 1.28, 2.48], fov: 30 },
   },
   2: {
-    title: '3. Floating-Base Cart-Pole (BRT38)',
-    desc: 'Fixed G00 wrist receiver and a 90° tool-side bracket with coaxial BRT38 encoder & Ø8×250 mm aluminum rod (J7 = +45°, fixed wrist IMU & 3 mocap spheres clear with 0/721 collisions, swing along world +X). Encoder side: two M4×30 button heads enter from G00 above; locknuts slide into the G01 side windows. The opposite two screws enter from below.',
-    phaseNames: { 0: 'KICK', 1: 'SWING-UP', 2: 'LQR BALANCE' },
+    title: 'Cart-Pole',
+    desc: 'A passive pendulum on the end effector is swung up and balanced while the base moves.',
+    phaseNames: { 0: 'Kick', 1: 'Swing-up', 2: 'Balancing' },
     paramsOverride: { kTrans: 160, kRot: 80, supportScale: 0.3 },
     cam: { pos: [-0.22, 0.02, 2.74], target: [-0.46, 1.18, 2.62], fov: 35 },
   },
   4: {
-    title: '4. Lotus Petal SDF Contact Docking',
-    desc: 'Compact DN01 thin ring + HPS74A 6-axis F/T sensor + DN02 male lotus petal & J03A female station on fixed wrist receiver (J7 = +45°): direct CAD-mesh MuJoCo native SDF contact mating on moving KUKA with compliant alignment & live 3D force vector.',
-    phaseNames: { 0: 'SETTLE', 1: 'APPROACH', 2: 'ALIGNING', 3: 'SEATED' },
+    title: 'Docking',
+    desc: 'A plug at the wrist is compliantly aligned and seated into a docking station on a moving base.',
+    phaseNames: { 0: 'Settling', 1: 'Approaching', 2: 'Aligning', 3: 'Seated' },
     paramsOverride: { kTrans: 300, kRot: 300 },
     cam: { pos: [0.12, 0.68, 2.68], target: [-0.46, 1.30, 2.57], fov: 30 },
   },
   5: {
-    title: '5. 3.5 m Flexible Beam Coupling (Two-Way)',
-    desc: 'Native 8-segment 3D Euler–Bernoulli cantilevered beam (L = 3.5 m, live E = 4–30 GPa) coupled two-way to FR3 link0. Inertial reactions visibly bend & ring the beam while End-Effector-Rooted SE(3)+QP stabilizes the wine glass.',
-    phaseNames: { 0: 'SELF-EXCITED', 1: 'HOLD / TAP', 2: 'DISTURBER ON' },
+    title: 'Flexible Beam',
+    desc: 'The arm stands on a 3.5 m flexible beam. Its own reactions bend the beam, which shakes the base in return.',
+    phaseNames: { 0: 'Self-excited', 1: 'Hold', 2: 'Disturber on' },
     paramsOverride: { kTrans: 180, kRot: 160, beamYoungGpa: 8.0, beamTaskMode: 0, beamDisturber: false },
     cam: { ...BEAM_CAMERA_PRESETS.hero, preset: 'hero' },
   },
@@ -81,8 +81,27 @@ const MJGEOM_BOX = 6;
 
 // --- Three.js Studio PBR Setup (native Z-up to match MuJoCo 1:1) ---
 const canvas = document.getElementById('viewport');
+// Without WebGL nothing can be drawn: say so instead of leaving the loading spinner running.
+(() => {
+  let ok = false;
+  try {
+    const c = document.createElement('canvas');
+    ok = !!(c.getContext('webgl2') || c.getContext('webgl'));
+  } catch {
+    ok = false;
+  }
+  if (!ok) {
+    document.getElementById('loadingText').textContent =
+      'WebGL is disabled in this browser, so the 3D simulator cannot run here. Please open this page in Chrome, Edge, Safari or Firefox with hardware acceleration on.';
+    document.querySelector('.load-card .spinner')?.remove();
+    document.querySelector('.load-progress-track')?.remove();
+    throw new Error('WebGL unavailable');
+  }
+})();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const IS_SMALL_TOUCH = window.matchMedia('(max-width: 960px), (pointer: coarse)').matches;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_SMALL_TOUCH ? 1.5 : 2));
+renderer.localClippingEnabled = true;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
@@ -90,9 +109,11 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.85;
 
 const scene = new THREE.Scene();
-const FOG_COLOR = srgb(0.34, 0.39, 0.43);
-scene.background = srgb(0.30, 0.35, 0.40);
-scene.fog = new THREE.Fog(FOG_COLOR, 18, 50);
+// Fog is mixed after tone mapping, so the sky dome below skips tone mapping and uses the
+// same horizon color: the distant floor then fades seamlessly into the backdrop.
+const FOG_COLOR = srgb(0.945, 0.945, 0.955);
+scene.background = FOG_COLOR;
+scene.fog = new THREE.Fog(FOG_COLOR, 9, 34);
 
 // Z-up studio gradient sky dome
 const skyGeo = new THREE.SphereGeometry(52, 32, 20);
@@ -101,9 +122,9 @@ const skyMat = new THREE.ShaderMaterial({
   depthWrite: false,
   fog: false,
   uniforms: {
-    uTopColor: { value: srgb(0.43, 0.50, 0.55) },
-    uHorizonColor: { value: srgb(0.60, 0.64, 0.68) },
-    uBottomColor: { value: srgb(0.20, 0.24, 0.29) },
+    uTopColor: { value: srgb(0.985, 0.985, 0.99) },
+    uHorizonColor: { value: FOG_COLOR },
+    uBottomColor: { value: FOG_COLOR },
   },
   vertexShader: `
     varying vec3 vWorldDir;
@@ -124,7 +145,6 @@ const skyMat = new THREE.ShaderMaterial({
         ? mix(uHorizonColor, uTopColor, smoothstep(0.0, 0.42, z))
         : mix(uHorizonColor, uBottomColor, smoothstep(0.0, 0.30, -z));
       gl_FragColor = vec4(col, 1.0);
-      #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }
   `,
@@ -166,8 +186,8 @@ let hasRenderedFirstScene = false;
 // Neutral daylight studio PBR rig
 const hemi = new THREE.HemisphereLight(
   new THREE.Color(0.88, 0.92, 0.98),
-  new THREE.Color(0.28, 0.30, 0.33),
-  0.44
+  new THREE.Color(0.62, 0.63, 0.66),
+  0.50
 );
 hemi.position.set(0, 0, 10);
 scene.add(hemi);
@@ -199,10 +219,10 @@ headlight.target.position.copy(controls.target);
 scene.add(headlight);
 scene.add(headlight.target);
 
-// Seamless matte slate studio floor
+// Seamless light-gray studio floor
 const floorGeo = new THREE.PlaneGeometry(96, 96);
 const floorMat = new THREE.MeshStandardMaterial({
-  color: srgb(0.36, 0.40, 0.43),
+  color: srgb(0.86, 0.86, 0.88),
   roughness: 0.95,
   metalness: 0.02,
   envMapIntensity: 0.55,
@@ -216,6 +236,10 @@ const robotGroup = new THREE.Group();
 scene.add(robotGroup);
 const overlayGroup = new THREE.Group();
 scene.add(overlayGroup);
+// Translucent copy of the arm + glass driven by the fixed-base baseline (worker ghost session)
+const ghostGroup = new THREE.Group();
+ghostGroup.visible = false;
+scene.add(ghostGroup);
 
 // --- Streaming Download Progress Tracker ---
 const loadBarFill = document.getElementById('loadBarFill');
@@ -243,7 +267,7 @@ function updateDownloadProgress(key, loaded, total) {
   peakProgressPct = Math.max(peakProgressPct, pct);
   if (loadBarFill) loadBarFill.style.width = `${Math.max(3, peakProgressPct)}%`;
   if (loadProgressMeta) {
-    loadProgressMeta.textContent = `${(sumLoaded / 1048576).toFixed(1)} / ${(sumTotal / 1048576).toFixed(1)} MB · ${peakProgressPct}%`;
+    loadProgressMeta.textContent = `${peakProgressPct}%`;
   }
 }
 
@@ -612,7 +636,7 @@ function buildFlexibleBeamVisuals(bodyNames) {
   ]);
   const beamRefLine = new THREE.Line(
     refGeo,
-    new THREE.LineDashedMaterial({ color: 0xcbd5e1, dashSize: 0.08, gapSize: 0.05, transparent: true, opacity: 0.55 })
+    new THREE.LineDashedMaterial({ color: 0x86868b, dashSize: 0.08, gapSize: 0.05, transparent: true, opacity: 0.55 })
   );
   beamRefLine.computeLineDistances();
   overlayGroup.add(beamRefLine);
@@ -827,7 +851,7 @@ function syncOverlayVisibility() {
   rowOverlayDeflect5x.classList.toggle('hidden', !isBeam);
 }
 
-function buildSceneMeshes(bodyNames, geoms, refPath) {
+function buildSceneMeshes(bodyNames, geoms, refPath, bodyRootIds = []) {
   while (robotGroup.children.length) robotGroup.remove(robotGroup.children[0]);
   while (overlayGroup.children.length) overlayGroup.remove(overlayGroup.children[0]);
   bodyGroups = [];
@@ -867,6 +891,7 @@ function buildSceneMeshes(bodyNames, geoms, refPath) {
         mesh.quaternion.set(item.quat[1], item.quat[2], item.quat[3], item.quat[0]);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+        mesh.userData.bodyId = b;
         g.add(mesh);
       }
     }
@@ -898,6 +923,7 @@ function buildSceneMeshes(bodyNames, geoms, refPath) {
     const mesh = new THREE.Mesh(geo, makeMaterial(rgba, { meshName: gm.name }));
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    mesh.userData.bodyId = gm.bodyId;
     robotGroup.add(mesh);
     primitiveGeoms.push({ geomId: gm.id, mesh });
   }
@@ -952,7 +978,435 @@ function buildSceneMeshes(bodyNames, geoms, refPath) {
     beamVisuals = buildFlexibleBeamVisuals(bodyNames);
   }
 
+  buildInteractionOverlays();
+  buildWorldOverlays();
+  glassBodyId = bodyNames.indexOf('wine_glass');
+  link0BodyId = bodyNames.indexOf('link0');
+  mainWine = glassBodyId >= 0 && bodyGroups[glassBodyId].children.length
+    ? createWine(bodyGroups[glassBodyId], false)
+    : null;
+  buildGhost(bodyNames, bodyRootIds);
   syncOverlayVisibility();
+}
+
+// --- Glass contact forces (friction-only support) & mouse-push overlays ---
+const GLASS_MAX_CONTACTS = 8;
+let glassContactViz = null;
+let perturbViz = null;
+
+function frictionColor(use) {
+  return use < 0.3 ? 0x34c759 : use < 0.7 ? 0xff9500 : 0xff3b30;
+}
+
+function buildInteractionOverlays() {
+  const dotGeo = new THREE.SphereGeometry(0.0028, 12, 8);
+  const group = new THREE.Group();
+  const dots = [];
+  const arrows = [];
+  for (let i = 0; i < GLASS_MAX_CONTACTS; i++) {
+    const dot = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: 0x1d1d1f }));
+    const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 0.03, 0x34c759, 0.009, 0.006);
+    dot.visible = false;
+    arrow.visible = false;
+    group.add(dot, arrow);
+    dots.push(dot);
+    arrows.push(arrow);
+  }
+  overlayGroup.add(group);
+  glassContactViz = { group, dots, arrows };
+
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+  const line = new THREE.Line(
+    lineGeo,
+    new THREE.LineDashedMaterial({ color: 0x0071e3, dashSize: 0.012, gapSize: 0.008, depthTest: false, transparent: true })
+  );
+  const handle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.006, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0x0071e3, depthTest: false, transparent: true })
+  );
+  const grab = new THREE.Mesh(
+    new THREE.SphereGeometry(0.0045, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true })
+  );
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0.1, 0x0071e3, 0.02, 0.012);
+  arrow.line.material.depthTest = false;
+  arrow.cone.material.depthTest = false;
+  arrow.line.material.transparent = true;
+  arrow.cone.material.transparent = true;
+  for (const o of [line, handle, grab, arrow, arrow.line, arrow.cone]) o.renderOrder = 20;
+  const pgroup = new THREE.Group();
+  pgroup.add(line, arrow, handle, grab);
+  pgroup.visible = false;
+  overlayGroup.add(pgroup);
+  perturbViz = { group: pgroup, line, handle, grab, arrow };
+}
+
+function updateGlassContactOverlay(tel) {
+  if (!glassContactViz) return;
+  const show = chkOverlayForce.checked && (currentDemoId === 0 || currentDemoId === 1);
+  const gc = tel.glassContacts || [];
+  const n = show ? Math.min(GLASS_MAX_CONTACTS, Math.floor(gc.length / 6)) : 0;
+  const color = frictionColor(tel.glassFrictionUse || 0);
+  for (let i = 0; i < GLASS_MAX_CONTACTS; i++) {
+    const dot = glassContactViz.dots[i];
+    const arrow = glassContactViz.arrows[i];
+    if (i >= n) {
+      dot.visible = false;
+      arrow.visible = false;
+      continue;
+    }
+    const o = 6 * i;
+    dot.position.set(gc[o], gc[o + 1], gc[o + 2]);
+    dot.visible = true;
+    tmpForceVec.set(gc[o + 3], gc[o + 4], gc[o + 5]);
+    const mag = tmpForceVec.length();
+    if (mag < 1e-3) {
+      arrow.visible = false;
+      continue;
+    }
+    arrow.position.copy(dot.position);
+    arrow.setDirection(tmpForceVec.divideScalar(mag));
+    const len = Math.min(0.09, 0.012 + 0.05 * mag);
+    arrow.setLength(len, Math.min(0.012, len * 0.35), Math.min(0.007, len * 0.2));
+    arrow.setColor(color);
+    arrow.visible = true;
+  }
+}
+
+// --- Wine: first sloshing mode from the WASM model, drawn as the bowl volume under a clip plane ---
+// Inner bowl profile of the Rev J brandy glass in the glass body frame (z, r in m; 0.6 mm inset).
+const WINE_FILL_Z = 0.090;  // keep equal to WineModel::kFillZ
+const WINE_PROFILE = [
+  [53, 0], [54, 9], [56, 16], [60, 27.5], [64, 33.6], [68, 38.2], [72, 42.2], [76, 44.6], [80, 46.3],
+  [84, 46.9], [88, 46.6], [92, 45.9], [96, 45.0], [100, 43.3], [104, 41.0], [112, 37.4], [120, 34.3], [128, 31.0],
+].map(([z, r]) => [z / 1000, Math.max(0, r - 0.6) / 1000]);
+const WINE_SEG = 56;
+
+function wineRadiusAt(z) {
+  const P = WINE_PROFILE;
+  if (z <= P[0][0]) return 0;
+  if (z >= P[P.length - 1][0]) return P[P.length - 1][1];
+  for (let i = 1; i < P.length; i++) {
+    if (z <= P[i][0]) {
+      const u = (z - P[i - 1][0]) / (P[i][0] - P[i - 1][0]);
+      return P[i - 1][1] + u * (P[i][1] - P[i - 1][1]);
+    }
+  }
+  return 0;
+}
+
+// Red wine look: a liquid volume is darker where light crosses more of it. The body shell is
+// shaded by view-path thickness (|n.v|: deep garnet in the core, lighter translucent ruby at the
+// silhouette and near the surface) and by depth below the surface; the surface disc gets a light
+// rim (the thin layer against the glass) around a darker centre, with a glossy clear coat.
+const WINE_CORE = new THREE.Color(0x4a0014);
+const WINE_MID = new THREE.Color(0x980a2c);
+const WINE_EDGE = new THREE.Color(0xd92a4c);
+const WINE_SURF = new THREE.Color(0x86082c);
+
+function wineBodyMaterial(plane) {
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.08,
+    metalness: 0.0,
+    clearcoat: 0.6,
+    clearcoatRoughness: 0.05,
+    envMapIntensity: 0.9,
+    transparent: true,
+    opacity: 1.0,
+    side: THREE.FrontSide,
+    clippingPlanes: [plane],
+    depthWrite: false,
+  });
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uWineCore = { value: WINE_CORE };
+    shader.uniforms.uWineMid = { value: WINE_MID };
+    shader.uniforms.uWineEdge = { value: WINE_EDGE };
+    shader.uniforms.uWineFill = { value: WINE_FILL_Z };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying float vWineZ;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWineZ = position.z;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+uniform vec3 uWineCore; uniform vec3 uWineMid; uniform vec3 uWineEdge; uniform float uWineFill;
+varying float vWineZ;
+float wineThick;`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+{
+  float ndv = clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
+  float depth = clamp((uWineFill - vWineZ) / 0.03, 0.0, 1.0);
+  wineThick = clamp(0.75 * smoothstep(0.05, 0.95, ndv) + 0.35 * depth, 0.0, 1.0);
+  vec3 c = mix(uWineEdge, uWineMid, smoothstep(0.0, 0.55, wineThick));
+  c = mix(c, uWineCore, smoothstep(0.45, 1.0, wineThick));
+  diffuseColor.rgb = c;
+  diffuseColor.a = mix(0.5, 0.95, wineThick);
+}`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+totalEmissiveRadiance += uWineEdge * 0.10 * (1.0 - wineThick);`);
+  };
+  return mat;
+}
+
+function createWine(parent, ghostStyle = false) {
+  const pts = WINE_PROFILE.map(([z, r]) => new THREE.Vector2(r, z));
+  const lathe = new THREE.LatheGeometry(pts, 64);
+  lathe.rotateX(Math.PI / 2);
+  const plane = new THREE.Plane();
+  const bodyMat = ghostStyle
+    ? new THREE.MeshPhysicalMaterial({
+      color: 0x9a5a66, roughness: 0.2, metalness: 0.0, transparent: true, opacity: 0.3,
+      side: THREE.DoubleSide, clippingPlanes: [plane], depthWrite: false,
+    })
+    : wineBodyMaterial(plane);
+  const body = new THREE.Mesh(lathe, bodyMat);
+  body.renderOrder = 1;
+  const surfGeo = new THREE.BufferGeometry();
+  const pos = new Float32Array((WINE_SEG + 2) * 3);
+  const nrm = new Float32Array((WINE_SEG + 2) * 3);
+  const col = new Float32Array((WINE_SEG + 2) * 4);
+  const idx = [];
+  for (let i = 1; i <= WINE_SEG; i++) idx.push(0, i, i + 1);
+  // Surface: dark, nearly opaque centre fading to a lighter, more transparent rim.
+  for (let i = 0; i < WINE_SEG + 2; i++) {
+    const c = i === 0 ? WINE_SURF : WINE_EDGE;
+    col.set([c.r, c.g, c.b, i === 0 ? 0.88 : 0.6], 4 * i);
+  }
+  surfGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  surfGeo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+  surfGeo.setAttribute('color', new THREE.BufferAttribute(col, 4));
+  surfGeo.setIndex(idx);
+  const surfMat = new THREE.MeshPhysicalMaterial({
+    color: ghostStyle ? 0xb07580 : 0xffffff,
+    vertexColors: !ghostStyle,
+    roughness: 0.04,
+    metalness: 0.0,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.03,
+    envMapIntensity: 1.2,
+    transparent: true,
+    opacity: ghostStyle ? 0.35 : 1.0,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const surf = new THREE.Mesh(surfGeo, surfMat);
+  surf.renderOrder = 2;
+  body.castShadow = false;
+  surf.castShadow = false;
+  parent.add(body, surf);
+  return { parent, body, surf, plane, pos, nrm, surfGeo };
+}
+
+// slope = (dz/dx, dz/dy) of the free surface in the glass frame; spilled hides the wine.
+function updateWine(w, slopeX, slopeY, spilled) {
+  if (!w) return;
+  const show = !spilled;
+  w.body.visible = show;
+  w.surf.visible = show;
+  if (!show) return;
+  const inv = 1 / Math.hypot(slopeX, slopeY, 1);
+  // Keep the liquid below z = zf + sx x + sy y (Three.js clips the negative side of the plane)
+  w.plane.normal.set(slopeX * inv, slopeY * inv, -inv);
+  w.plane.constant = WINE_FILL_Z * inv;
+  w.parent.updateMatrixWorld(true);
+  w.plane.applyMatrix4(w.parent.matrixWorld);
+
+  const { pos, nrm } = w;
+  pos[0] = 0; pos[1] = 0; pos[2] = WINE_FILL_Z;
+  for (let i = 0; i <= WINE_SEG; i++) {
+    const phi = (2 * Math.PI * i) / WINE_SEG;
+    const c = Math.cos(phi);
+    const sn = Math.sin(phi);
+    const k = slopeX * c + slopeY * sn;
+    // Radius where the surface meets the bowl wall: rho = r(zf + k rho), by bisection
+    let lo = 0;
+    let hi = 0.06;
+    if (hi - wineRadiusAt(WINE_FILL_Z + k * hi) < 0) lo = hi;
+    for (let it = 0; it < 22 && lo < hi; it++) {
+      const mid = 0.5 * (lo + hi);
+      if (mid - wineRadiusAt(WINE_FILL_Z + k * mid) < 0) lo = mid; else hi = mid;
+    }
+    const rho = 0.5 * (lo + hi);
+    const o = 3 * (i + 1);
+    pos[o] = rho * c;
+    pos[o + 1] = rho * sn;
+    pos[o + 2] = WINE_FILL_Z + k * rho;
+  }
+  for (let i = 0; i < WINE_SEG + 2; i++) {
+    nrm[3 * i] = -slopeX * inv;
+    nrm[3 * i + 1] = -slopeY * inv;
+    nrm[3 * i + 2] = inv;
+  }
+  w.surfGeo.attributes.position.needsUpdate = true;
+  w.surfGeo.attributes.normal.needsUpdate = true;
+  w.surfGeo.computeBoundingSphere();
+}
+
+let mainWine = null;
+let ghostWine = null;
+let ghostBodies = [];
+let glassBodyId = -1;
+let link0BodyId = -1;
+const GHOST_SKIP = new Set(['link0', 'transition_plate']);
+const ghostMat = new THREE.MeshStandardMaterial({
+  color: 0x8fa8d8,
+  roughness: 0.55,
+  metalness: 0.0,
+  transparent: true,
+  opacity: 0.36,
+  depthWrite: false,
+});
+
+// Copy the meshes of the free-floating FR3 tree and the free glass for the baseline ghost.
+function buildGhost(bodyNames, bodyRootIds) {
+  while (ghostGroup.children.length) ghostGroup.remove(ghostGroup.children[0]);
+  ghostBodies = [];
+  ghostWine = null;
+  const l7 = bodyNames.indexOf('link7');
+  if (l7 < 0 || !bodyRootIds || !bodyRootIds.length) return;
+  const roots = new Set([bodyRootIds[l7]]);
+  if (glassBodyId >= 0) roots.add(bodyRootIds[glassBodyId]);
+  for (let b = 0; b < bodyNames.length; b++) {
+    if (!roots.has(bodyRootIds[b]) || GHOST_SKIP.has(bodyNames[b])) continue;
+    const src = bodyGroups[b];
+    if (!src || !src.children.length) continue;
+    const g = new THREE.Group();
+    for (const m of src.children) {
+      if (!m.isMesh) continue;
+      const c = new THREE.Mesh(m.geometry, ghostMat);
+      c.position.copy(m.position);
+      c.quaternion.copy(m.quaternion);
+      c.renderOrder = 3;
+      g.add(c);
+    }
+    ghostGroup.add(g);
+    ghostBodies.push({ b, g });
+    if (b === glassBodyId) ghostWine = createWine(g, true);
+  }
+}
+
+function applyGhostFrame(gf) {
+  const show = !!gf && ghostEnabled && !!currentParams.controllerEnabled && ghostBodies.length > 0;
+  ghostGroup.visible = show;
+  if (!show) return;
+  for (const { b, g } of ghostBodies) {
+    g.position.set(gf.bodyXpos[3 * b], gf.bodyXpos[3 * b + 1], gf.bodyXpos[3 * b + 2]);
+    g.quaternion.set(gf.bodyXquat[4 * b + 1], gf.bodyXquat[4 * b + 2], gf.bodyXquat[4 * b + 3], gf.bodyXquat[4 * b]);
+  }
+  const t = gf.telemetry || {};
+  updateWine(ghostWine, t.wineSlopeX || 0, t.wineSlopeY || 0, !!t.wineSpilled);
+}
+
+// World-fixed target ring around the glass foot (Still Wine) and a fading trail of the arm base.
+let targetRing = null;
+let baseTrail = null;
+const BASE_TRAIL_MAX = 300;
+const baseTrailPts = new Float32Array(BASE_TRAIL_MAX * 3);
+const baseTrailCols = new Float32Array(BASE_TRAIL_MAX * 3);
+let baseTrailCount = 0;
+const BASE_TRAIL_RGB = [0.69, 0.32, 0.87];
+
+function buildWorldOverlays() {
+  targetRing = new THREE.Group();
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.047, 0.0012, 10, 96),
+    new THREE.MeshBasicMaterial({ color: 0x34c759, transparent: true, opacity: 0.95 })
+  );
+  targetRing.add(ring);
+  for (let i = 0; i < 4; i++) {
+    const tick = new THREE.Mesh(
+      new THREE.BoxGeometry(0.014, 0.0016, 0.0016),
+      new THREE.MeshBasicMaterial({ color: 0x34c759, transparent: true, opacity: 0.95 })
+    );
+    const a = (i * Math.PI) / 2;
+    tick.position.set(0.058 * Math.cos(a), 0.058 * Math.sin(a), 0);
+    tick.rotation.z = a;
+    targetRing.add(tick);
+  }
+  targetRing.visible = false;
+  overlayGroup.add(targetRing);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(baseTrailPts, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(baseTrailCols, 3));
+  geo.setDrawRange(0, 0);
+  baseTrail = new THREE.Line(
+    geo,
+    new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, depthTest: false })
+  );
+  baseTrail.renderOrder = 10;
+  baseTrail.frustumCulled = false;
+  overlayGroup.add(baseTrail);
+  baseTrailCount = 0;
+}
+
+function updateWorldOverlays(msg) {
+  const tel = msg.telemetry;
+  const kuka = currentDemoId !== 5;
+  if (targetRing) {
+    targetRing.visible = chkOverlayPath.checked && currentDemoId === 0 && !!tel.refPos;
+    if (targetRing.visible) {
+      targetRing.position.set(tel.refPos[0], tel.refPos[1], tel.refPos[2] + 0.0008);
+      targetRing.quaternion.set(tel.refQuat[1], tel.refQuat[2], tel.refQuat[3], tel.refQuat[0]);
+    }
+  }
+  if (!baseTrail) return;
+  baseTrail.visible = chkBaseTrail.checked && kuka && link0BodyId >= 0;
+  if (!baseTrail.visible) return;
+  if (tel.time < lastTelemetryTime - 0.05) baseTrailCount = 0;
+  const b = link0BodyId;
+  const p = [msg.bodyXpos[3 * b], msg.bodyXpos[3 * b + 1], msg.bodyXpos[3 * b + 2]];
+  if (baseTrailCount < BASE_TRAIL_MAX) {
+    baseTrailPts.set(p, 3 * baseTrailCount);
+    baseTrailCount++;
+  } else {
+    baseTrailPts.copyWithin(0, 3);
+    baseTrailPts.set(p, 3 * (BASE_TRAIL_MAX - 1));
+  }
+  // Fade from the background color (oldest) to purple (newest)
+  for (let i = 0; i < baseTrailCount; i++) {
+    const u = baseTrailCount > 1 ? i / (baseTrailCount - 1) : 1;
+    const a = u * u;
+    baseTrailCols[3 * i] = 0.945 + a * (BASE_TRAIL_RGB[0] - 0.945);
+    baseTrailCols[3 * i + 1] = 0.945 + a * (BASE_TRAIL_RGB[1] - 0.945);
+    baseTrailCols[3 * i + 2] = 0.955 + a * (BASE_TRAIL_RGB[2] - 0.955);
+  }
+  baseTrail.geometry.attributes.position.needsUpdate = true;
+  baseTrail.geometry.attributes.color.needsUpdate = true;
+  baseTrail.geometry.setDrawRange(0, baseTrailCount);
+}
+
+// Perturbation state from the worker: [active, point xyz, force xyz (N)]
+function updatePerturbOverlay(ps) {
+  if (!perturbViz) return;
+  const active = !!(pushDrag && ps && ps[0] > 0.5);
+  perturbViz.group.visible = active;
+  if (!active) {
+    forceLabel.classList.add('hidden');
+    return;
+  }
+  const t = pushDrag.target;
+  const pos = perturbViz.line.geometry.attributes.position;
+  pos.setXYZ(0, ps[1], ps[2], ps[3]);
+  pos.setXYZ(1, t.x, t.y, t.z);
+  pos.needsUpdate = true;
+  perturbViz.line.geometry.computeBoundingSphere();
+  perturbViz.line.computeLineDistances();
+  perturbViz.handle.position.copy(t);
+  perturbViz.grab.position.set(ps[1], ps[2], ps[3]);
+  tmpForceVec.set(ps[4], ps[5], ps[6]);
+  const mag = tmpForceVec.length();
+  if (mag > 0.02) {
+    perturbViz.arrow.visible = true;
+    perturbViz.arrow.position.set(ps[1], ps[2], ps[3]);
+    perturbViz.arrow.setDirection(tmpForceVec.divideScalar(mag));
+    const len = Math.min(0.3, 0.03 + 0.02 * mag);
+    perturbViz.arrow.setLength(len, Math.min(0.03, len * 0.3), Math.min(0.016, len * 0.16));
+  } else {
+    perturbViz.arrow.visible = false;
+  }
+  forceLabel.textContent = `${mag.toFixed(1)} N`;
+  forceLabel.classList.remove('hidden');
 }
 
 function updateReferencePathOverlay(refPath) {
@@ -961,15 +1415,59 @@ function updateReferencePathOverlay(refPath) {
     refLine.geometry.dispose();
     refLine = null;
   }
+  pathCam = computePathCamera(refPath);
+  syncPathCamButton();
   if (!refPath || refPath.length < 6) return;
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(refPath), 3));
-  refLine = new THREE.Line(
+  const pts = [];
+  for (let i = 0; i + 2 < refPath.length; i += 3) {
+    const v = new THREE.Vector3(refPath[i], refPath[i + 1], refPath[i + 2]);
+    if (!pts.length || v.distanceToSquared(pts[pts.length - 1]) > 1e-10) pts.push(v);
+  }
+  if (pts.length < 2) return;
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+  const geo = new THREE.TubeGeometry(curve, Math.min(1500, pts.length * 4), 0.0015, 6, false);
+  refLine = new THREE.Mesh(
     geo,
-    new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 })
+    new THREE.MeshBasicMaterial({ color: 0x0a84ff, transparent: true, opacity: 0.8 })
   );
   refLine.visible = chkOverlayPath.checked;
   overlayGroup.add(refLine);
+}
+
+// Camera looking straight at the plane of a (planar) reference path, sized to fit it.
+let pathCam = null;
+function computePathCamera(refPath) {
+  if (!refPath || refPath.length < 30) return null;
+  const box = new THREE.Box3();
+  const v = new THREE.Vector3();
+  for (let i = 0; i + 2 < refPath.length; i += 3) box.expandByPoint(v.set(refPath[i], refPath[i + 1], refPath[i + 2]));
+  const size = box.getSize(new THREE.Vector3());
+  const c = box.getCenter(new THREE.Vector3());
+  const ext = [size.x, size.y, size.z];
+  const k = ext.indexOf(Math.min(...ext));
+  const span = Math.max(...ext);
+  if (span < 0.02) return null;
+  const fov = 24;
+  // Fit the larger of the vertical / horizontal extents (portrait phones are width-limited)
+  const aspect = Math.min(1, Math.max(0.3, camera.aspect || 1));
+  const dist = (span * 1.9 + 0.08) / 2 / Math.tan(THREE.MathUtils.degToRad(fov / 2)) / aspect;
+  const pos = c.clone();
+  if (k === 2) {
+    pos.z += dist; // horizontal path: look down, tilted slightly so orbit controls stay well-posed
+    pos.y -= 0.12 * dist;
+  } else {
+    const n = new THREE.Vector3();
+    n.setComponent(k, 1);
+    pos.addScaledVector(n, dist);
+    pos.z += 0.05 * dist;
+  }
+  return { pos: pos.toArray(), target: c.toArray(), fov };
+}
+
+function syncPathCamButton() {
+  const isTrack = currentDemoId === 1 || (currentDemoId === 5 && Number(currentParams.beamTaskMode || 0) === 0);
+  const btn = document.getElementById('camPathBtn');
+  if (btn) btn.classList.toggle('hidden', !(pathCam && isTrack));
 }
 
 const tmpMat4 = new THREE.Matrix4();
@@ -1059,6 +1557,12 @@ function applyFrame(msg) {
   if (currentDemoId === 5) {
     updateFlexibleBeamVisuals(telemetry);
   }
+  updateGlassContactOverlay(telemetry);
+  updatePerturbOverlay(msg.perturb);
+  updateWine(mainWine, telemetry.wineSlopeX || 0, telemetry.wineSlopeY || 0, !!telemetry.wineSpilled);
+  applyGhostFrame(msg.ghost);
+  telemetry.ghost = ghostGroup.visible && msg.ghost ? msg.ghost.telemetry : null;
+  updateWorldOverlays(msg);
 
   if (trailLine && telemetry.eePos && (currentDemoId === 0 || currentDemoId === 1 || currentDemoId === 5)) {
     const validPos =
@@ -1093,6 +1597,121 @@ let lastTelemetryTime = -1;
 const hudTime = document.getElementById('hudTime');
 const hudRtf = document.getElementById('hudRtf');
 const hudPhase = document.getElementById('hudPhase');
+const hudPhaseSep = document.getElementById('hudPhaseSep');
+const readoutEl = document.getElementById('readout');
+const readoutLabel = document.getElementById('readoutLabel');
+const readoutTag = document.getElementById('readoutTag');
+const readoutValue = document.getElementById('readoutValue');
+const readoutUnit = document.getElementById('readoutUnit');
+const readoutSub = document.getElementById('readoutSub');
+const readoutExtra = document.getElementById('readoutExtra');
+const rxFric = document.getElementById('rxFric');
+const rxFill = document.getElementById('rxFill');
+const rxNote = document.getElementById('rxNote');
+const rxWine = document.getElementById('rxWine');
+const rxWineRow = document.getElementById('rxWineRow');
+const rxGhost = document.getElementById('rxGhost');
+let lastReadoutMs = 0;
+
+// RMS of a telemetry channel over the trailing window (seconds) of the plot history
+function windowRms(get, windowS = 1.0) {
+  if (!history.length) return 0;
+  const tEnd = history[history.length - 1].time;
+  let sum = 0;
+  let n = 0;
+  for (let i = history.length - 1; i >= 0 && history[i].time >= tEnd - windowS; i--) {
+    const v = Number(get(history[i])) || 0;
+    sum += v * v;
+    n += 1;
+  }
+  return n ? Math.sqrt(sum / n) : 0;
+}
+
+let lastAlignedError = '';
+
+function updateReadout(tel) {
+  const now = performance.now();
+  if (now - lastReadoutMs < 150) return;
+  lastReadoutMs = now;
+  const alignedError = tel.alignedError || '';
+  if (alignedError && alignedError !== lastAlignedError) {
+    // As the Python run, a QP/dynamics failure ends it; the worker restarts from t = 0.
+    showToast(`Low level stopped (${alignedError}); restarted`);
+  }
+  lastAlignedError = alignedError;
+  const ours = !!currentParams.controllerEnabled;
+  readoutEl.classList.toggle('baseline', !ours);
+  readoutTag.textContent = ours ? (tel.aligned ? 'Ours · GRU + MOB' : 'Ours') : 'Fixed-base';
+  const g = tel.ghost;
+  if (currentDemoId === 2) {
+    readoutLabel.textContent = 'Pendulum angle';
+    readoutValue.textContent = tel.pendulumAngleDeg.toFixed(1);
+    readoutUnit.textContent = '°';
+    readoutSub.textContent = g
+      ? `Fixed-base: ${g.pendulumAngleDeg.toFixed(0)}°`
+      : DEMO_META[2].phaseNames[tel.phase] ?? '';
+  } else if (currentDemoId === 4) {
+    readoutLabel.textContent = 'Docking gap';
+    readoutValue.textContent = tel.dockingGapMm.toFixed(2);
+    readoutUnit.textContent = 'mm';
+    readoutSub.textContent = g
+      ? `${tel.dockingSeated ? 'Seated' : 'Aligning'} · fixed-base gap ${g.dockingGapMm.toFixed(1)} mm`
+      : tel.dockingSeated ? 'Seated' : 'Aligning';
+  } else {
+    readoutLabel.textContent = 'End-effector error';
+    readoutValue.textContent = windowRms((p) => p.eePosErrMm).toFixed(2);
+    readoutUnit.textContent = 'mm';
+    readoutSub.textContent = currentDemoId === 5
+      ? `Base sway ${(tel.beamTipDispMm || 0).toFixed(0)} mm`
+      : g
+        ? `RMS over last 1 s · fixed-base ${windowRms((p) => (p.ghost ? p.ghost.eePosErrMm : 0)).toFixed(0)} mm`
+        : 'RMS over last 1 s';
+  }
+  updateGlassReadout(tel);
+}
+
+// Friction budget of the free-standing glass: |tangential| / (mu * normal), peak over 0.5 s.
+function updateGlassReadout(tel) {
+  const hasGlass = currentDemoId === 0 || currentDemoId === 1;
+  readoutExtra.classList.toggle('hidden', !hasGlass);
+  if (!hasGlass) return;
+  const tilt = tel.glassTiltDeg || 0;
+  const tipped = tilt > 25;
+  // Wine surface: peak tilt relative to the glass over the last 1 s (first sloshing mode)
+  let ripple = 0;
+  if (history.length) {
+    const tEnd = history[history.length - 1].time;
+    for (let i = history.length - 1; i >= 0 && history[i].time >= tEnd - 1.0; i--) {
+      ripple = Math.max(ripple, history[i].wineRippleDeg || 0);
+    }
+  }
+  rxWine.textContent = tel.wineSpilled ? 'Spilled' : `${ripple.toFixed(1)}°`;
+  rxWineRow.classList.toggle('bad', !!tel.wineSpilled);
+  const g = tel.ghost;
+  rxGhost.classList.toggle('hidden', !g);
+  if (g) {
+    rxGhost.textContent = `Fixed-base: ${g.wineSpilled ? 'wine spilled' : `wine ${g.wineRippleDeg.toFixed(0)}°`}` +
+      `${g.glassTiltDeg > 25 ? ', glass tipped over' : `, friction ${(100 * (g.glassFrictionUse || 0)).toFixed(0)} %`}`;
+  }
+  readoutExtra.classList.toggle('tipped', tipped);
+  if (tipped) {
+    rxFric.textContent = 'Tipped over';
+    rxNote.textContent = `Glass tilt ${tilt.toFixed(0)}°`;
+    return;
+  }
+  let peak = 0;
+  if (history.length) {
+    const tEnd = history[history.length - 1].time;
+    for (let i = history.length - 1; i >= 0 && history[i].time >= tEnd - 0.5; i--) {
+      peak = Math.max(peak, history[i].glassFrictionUse || 0);
+    }
+  }
+  const pct = 100 * peak;
+  rxFric.textContent = `${pct < 10 ? pct.toFixed(1) : pct.toFixed(0)} %`;
+  rxFill.style.width = `${Math.min(100, Math.max(1.5, pct))}%`;
+  rxFill.style.background = `#${frictionColor(peak).toString(16).padStart(6, '0')}`;
+  rxNote.textContent = `Slip ${(tel.glassSlipMm || 0).toFixed(2)} mm · tilt ${tilt.toFixed(2)}°`;
+}
 const metricGrid = document.getElementById('metricGrid');
 const chart1 = document.getElementById('chart1');
 const chart2 = document.getElementById('chart2');
@@ -1119,7 +1738,7 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
   const ph = h - padT - padB;
 
   // Subtle horizontal grid
-  ctx.strokeStyle = 'rgba(154, 166, 180, 0.13)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = padT + (ph * i) / 4;
@@ -1139,16 +1758,23 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
     for (const s of seriesList) {
       for (const pt of history) {
         const v = s.get(pt);
+        if (v === null || !Number.isFinite(v)) continue;
         if (v < ymin) ymin = v;
         if (v > ymax) ymax = v;
       }
     }
+    if (opts.log && Number.isFinite(ymin)) {
+      ymin = Math.floor(ymin);
+      ymax = Math.max(ymin + 1, Math.ceil(ymax));
+    }
     if (!Number.isFinite(ymin) || !Number.isFinite(ymax)) return;
-    if (opts.includeZero) {
+    if (opts.includeZero && !opts.log) {
       ymin = Math.min(ymin, 0);
       ymax = Math.max(ymax, 0);
     }
-    if (Math.abs(ymax - ymin) < 1e-4) {
+    if (opts.log) {
+      // decade-aligned range, no padding
+    } else if (Math.abs(ymax - ymin) < 1e-4) {
       ymin -= 1;
       ymax += 1;
     } else {
@@ -1179,13 +1805,13 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
     for (const g of opts.guides) {
       if (g.value < ymin || g.value > ymax) continue;
       const y = mapY(g.value);
-      ctx.strokeStyle = g.color || 'rgba(148, 163, 184, 0.35)';
+      ctx.strokeStyle = g.color || 'rgba(0, 0, 0, 0.18)';
       ctx.beginPath();
       ctx.moveTo(padL, y);
       ctx.lineTo(w - padR, y);
       ctx.stroke();
       if (g.label) {
-        ctx.fillStyle = g.color || '#94a3b8';
+        ctx.fillStyle = g.color || '#86868b';
         ctx.textAlign = 'right';
         ctx.fillText(g.label, w - padR - 2, Math.max(padT + 9, y - 3));
       }
@@ -1193,38 +1819,56 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
     ctx.restore();
   }
 
-  // Y-axis tick labels
-  ctx.fillStyle = '#9aa6b4';
+  // Y-axis tick labels (log axes: decade ticks of the raw value)
+  ctx.fillStyle = '#86868b';
   ctx.font = '10px ui-monospace, monospace';
   ctx.textAlign = 'right';
-  ctx.fillText(ymax.toFixed(1), padL - 4, padT + 7);
-  ctx.fillText(((ymax + ymin) * 0.5).toFixed(1), padL - 4, padT + ph * 0.5 + 3);
-  ctx.fillText(ymin.toFixed(1), padL - 4, padT + ph + 1);
+  if (opts.log) {
+    const fmt = (e) => (e >= 0 ? String(10 ** e) : (10 ** e).toFixed(-e));
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+    for (let e = Math.ceil(ymin); e <= Math.floor(ymax); e++) {
+      const y = mapY(e);
+      ctx.fillText(fmt(e), padL - 4, y + 3);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(w - padR, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  } else {
+    ctx.fillText(ymax.toFixed(1), padL - 4, padT + 7);
+    ctx.fillText(((ymax + ymin) * 0.5).toFixed(1), padL - 4, padT + ph * 0.5 + 3);
+    ctx.fillText(ymin.toFixed(1), padL - 4, padT + ph + 1);
+  }
 
   // X-axis time window labels
   const tFirst = history[0].time || 0;
   const tLast = history[history.length - 1].time || 0;
   const spanS = Math.max(0.1, tLast - tFirst);
-  ctx.fillStyle = '#7e8c9c';
+  ctx.fillStyle = '#a1a1a6';
   ctx.font = '9.5px ui-monospace, monospace';
   ctx.textAlign = 'left';
   ctx.fillText(`-${spanS.toFixed(1)}s`, padL, h - 4);
-  ctx.textAlign = 'center';
-  ctx.fillText(opts.unit ? `Window (${opts.unit})` : 'Time Window', padL + pw * 0.5, h - 4);
   ctx.textAlign = 'right';
   ctx.fillText(`t=${tLast.toFixed(1)}s`, w - padR, h - 4);
 
   // Data traces
   for (const s of seriesList) {
     ctx.strokeStyle = s.color;
-    ctx.lineWidth = 1.9;
+    ctx.lineWidth = s.width || 1.7;
+    ctx.setLineDash(s.dash || []);
     ctx.beginPath();
     let prevV = null;
     for (let i = 0; i < history.length; i++) {
       const v = s.get(history[i]);
+      if (v === null || !Number.isFinite(v)) {
+        prevV = null;
+        continue;
+      }
       const x = padL + (pw * i) / (HISTORY_LEN - 1);
       const y = Math.max(padT, Math.min(padT + ph, mapY(v)));
-      if (i === 0 || (s.breakJump && prevV !== null && Math.abs(v - prevV) > s.breakJump)) {
+      if (prevV === null || (s.breakJump && Math.abs(v - prevV) > s.breakJump)) {
         ctx.moveTo(x, y);
       } else {
         ctx.lineTo(x, y);
@@ -1233,6 +1877,7 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
     }
     ctx.stroke();
   }
+  ctx.setLineDash([]);
 
   // Top-right crisp live readout for each series
   const lastPt = history[history.length - 1];
@@ -1241,7 +1886,8 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
   ctx.textAlign = 'right';
   for (let i = seriesList.length - 1; i >= 0; i--) {
     const s = seriesList[i];
-    const v = s.get(lastPt);
+    const v = (s.raw || s.get)(lastPt);
+    if (v === null || !Number.isFinite(v)) continue;
     const txt = `${s.tag ? `${s.tag} ` : ''}${v.toFixed(s.digits ?? 2)}`;
     ctx.fillStyle = s.color;
     ctx.fillText(txt, pillX, padT + 8);
@@ -1265,7 +1911,7 @@ function drawTorqueBars(canvasEl, tauJ) {
   const limits = [87, 87, 87, 87, 12, 12, 12];
   const midY = h * 0.52;
   const maxBar = h * 0.36;
-  ctx.strokeStyle = 'rgba(154, 166, 180, 0.28)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
   ctx.beginPath();
   ctx.moveTo(8, midY);
   ctx.lineTo(w - 8, midY);
@@ -1278,15 +1924,15 @@ function drawTorqueBars(canvasEl, tauJ) {
     const bh = norm * maxBar;
     const x = 12 + j * colW;
     const bw = colW - 8;
-    ctx.fillStyle = Math.abs(norm) > 0.75 ? '#ef4444' : norm >= 0 ? '#52b6e6' : '#f27024';
+    ctx.fillStyle = Math.abs(norm) > 0.75 ? '#ff3b30' : norm >= 0 ? '#0071e3' : '#ff9500';
     if (bh >= 0) ctx.fillRect(x, midY - bh, bw, bh);
     else ctx.fillRect(x, midY, bw, -bh);
 
-    ctx.fillStyle = '#9aa6b4';
+    ctx.fillStyle = '#86868b';
     ctx.font = '10px ui-monospace, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(`J${j + 1}`, x + bw / 2, h - 5);
-    ctx.fillStyle = '#d8e0e8';
+    ctx.fillStyle = '#1d1d1f';
     ctx.fillText(val.toFixed(1), x + bw / 2, 13);
   }
   ctx.textAlign = 'left';
@@ -1298,113 +1944,127 @@ function updateHudAndPlots(tel, rtf) {
   history.push(tel);
   if (history.length > HISTORY_LEN) history.shift();
 
-  hudTime.textContent = `${tel.time.toFixed(2)} s`;
-  hudRtf.textContent = `${rtf.toFixed(2)}x RT`;
-  hudRtf.className = `v ${rtf >= 0.85 ? 'ok' : 'warn'}`;
+  hudTime.textContent = `${tel.time.toFixed(1)} s`;
+  hudRtf.textContent = `${rtf.toFixed(2)}×`;
+  hudRtf.className = rtf >= 0.85 ? '' : 'warn';
   const pNames = DEMO_META[currentDemoId].phaseNames;
-  hudPhase.textContent = pNames[tel.phase] ?? `P${tel.phase}`;
+  const multiPhase = Object.keys(pNames).length > 1;
+  hudPhase.classList.toggle('hidden', !multiPhase);
+  hudPhaseSep.classList.toggle('hidden', !multiPhase);
+  if (multiPhase) hudPhase.textContent = pNames[tel.phase] ?? '';
+  updateReadout(tel);
+
+  const C_BLUE = '#0071e3';
+  const C_GREEN = '#34c759';
+  const C_ORANGE = '#ff9500';
+  const C_GHOST = '#8e8e93';
+  const legend = (items) =>
+    items.map(([c, t]) => `<span><i class="dot" style="background:${c}"></i>${t}</span>`).join('');
 
   let boxes = [];
   let series = [];
   let chartOpts = {};
   if (currentDemoId === 0 || currentDemoId === 1) {
     boxes = [
-      ['&Vert;p<sub>e</sub>&Vert;', `${tel.eePosErrMm.toFixed(2)} mm`],
-      ['RMSE(p<sub>e</sub>)', `${tel.eePosRmseMm.toFixed(2)} mm`],
-      ['&Vert;&phi;&Vert;', `${tel.eeRotErrDeg.toFixed(2)}&deg;`],
-      ['&psi;<sub>glass</sub>', `${(tel.glassTiltDeg || 0).toFixed(2)}&deg;`],
-      ['&Vert;&tau;<sub>sdk</sub>&Vert;<sub>&infin;</sub>', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
-      ['QP Res', tel.qpResidual >= 0 ? tel.qpResidual.toExponential(1) : 'FALLBACK'],
+      ['Position error', `${tel.eePosErrMm.toFixed(2)} mm`],
+      ['RMSE', `${tel.eePosRmseMm.toFixed(2)} mm`],
+      ['Orientation error', `${tel.eeRotErrDeg.toFixed(2)}&deg;`],
+      ['Glass tilt', `${(tel.glassTiltDeg || 0).toFixed(2)}&deg;`],
+      ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
+      ['QP residual', tel.qpResidual >= 0 ? tel.qpResidual.toExponential(1) : 'fallback'],
     ];
-    chart1Title.innerHTML = 'End-Effector Error &Vert;p<sub>e</sub>&Vert; &amp; RMSE (mm)';
-    chart1Legend.innerHTML =
-      '<span><i class="dot" style="background:#52b6e6"></i>&Vert;p<sub>e</sub>&Vert; (mm)</span>' +
-      '<span><i class="dot" style="background:#34d399"></i>RMSE (mm)</span>';
-    series = [
-      { color: '#52b6e6', tag: 'err', digits: 2, get: (p) => p.eePosErrMm },
-      { color: '#34d399', tag: 'rmse', digits: 2, get: (p) => p.eePosRmseMm },
-    ];
-    chartOpts = {
-      nonNegative: true,
-      includeZero: true,
-      unit: 'mm',
-      guides: [{ value: 0, color: 'rgba(148,163,184,0.35)' }],
-    };
+    if (tel.ghost) {
+      // Ours vs. the fixed-base ghost differ by orders of magnitude: log axis
+      const lg = (v) => Math.log10(Math.max(0.05, v));
+      chart1Title.textContent = 'End-effector error (mm, log scale)';
+      chart1Legend.innerHTML = legend([[C_BLUE, 'Ours'], [C_GHOST, 'Fixed-base']]);
+      series = [
+        { color: C_BLUE, digits: 2, get: (p) => lg(p.eePosErrMm), raw: (p) => p.eePosErrMm },
+        {
+          color: C_GHOST, digits: 1, dash: [4, 3],
+          get: (p) => (p.ghost ? lg(p.ghost.eePosErrMm) : null),
+          raw: (p) => (p.ghost ? p.ghost.eePosErrMm : null),
+        },
+      ];
+      chartOpts = { log: true, unit: 'mm' };
+    } else {
+      chart1Title.textContent = 'End-effector error (mm)';
+      chart1Legend.innerHTML = legend([[C_BLUE, 'Error'], [C_GREEN, 'RMSE']]);
+      series = [
+        { color: C_BLUE, tag: '', digits: 2, get: (p) => p.eePosErrMm },
+        { color: C_GREEN, tag: '', digits: 2, get: (p) => p.eePosRmseMm },
+      ];
+      chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
+    }
   } else if (currentDemoId === 2) {
     boxes = [
-      ['&theta; (Upright)', `${tel.pendulumAngleDeg.toFixed(1)}&deg;`],
-      ['&theta;&#775; (Rate)', `${tel.pendulumVelRadS.toFixed(2)} rad/s`],
-      ['t<sub>bal</sub> (&le;10&deg;)', `${tel.pendulumBalancedS.toFixed(1)} s`],
-      ['&Vert;&tau;<sub>sdk</sub>&Vert;<sub>&infin;</sub>', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
+      ['Angle', `${tel.pendulumAngleDeg.toFixed(1)}&deg;`],
+      ['Angular rate', `${tel.pendulumVelRadS.toFixed(2)} rad/s`],
+      ['Time balanced', `${tel.pendulumBalancedS.toFixed(1)} s`],
+      ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
-    chart1Title.innerHTML = 'Pendulum Upright Error &theta; (deg)';
-    chart1Legend.innerHTML =
-      '<span><i class="dot" style="background:#f27024"></i>&theta; (deg)</span>' +
-      '<span><i class="dot" style="background:rgba(52,211,153,0.55)"></i>&plusmn;10&deg; LQR Band</span>';
-    series = [{ color: '#f27024', tag: 'θ', digits: 1, breakJump: 180, get: (p) => p.pendulumAngleDeg }];
+    chart1Title.textContent = 'Pendulum angle from upright (deg)';
+    chart1Legend.innerHTML = legend([[C_ORANGE, 'Angle'], ['rgba(52,199,89,0.45)', '±10° band']]
+      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base']] : []));
+    series = [{ color: C_ORANGE, tag: '', digits: 1, breakJump: 180, get: (p) => p.pendulumAngleDeg }];
+    if (tel.ghost) {
+      series.push({ color: C_GHOST, digits: 1, dash: [4, 3], breakJump: 180,
+        get: (p) => (p.ghost ? p.ghost.pendulumAngleDeg : null) });
+    }
     chartOpts = {
       yRange: [-180, 180],
       unit: 'deg',
-      bands: [{ min: -10, max: 10, color: 'rgba(52, 211, 153, 0.16)' }],
-      guides: [
-        { value: 0, color: 'rgba(52, 211, 153, 0.55)', label: '0°' },
-      ],
+      bands: [{ min: -10, max: 10, color: 'rgba(52, 199, 89, 0.12)' }],
+      guides: [{ value: 0, color: 'rgba(36, 138, 61, 0.55)' }],
     };
   } else if (currentDemoId === 5) {
     boxes = [
-      ['&Vert;&delta;<sub>base</sub>&Vert; (Tip)', `${(tel.beamTipDispMm || 0).toFixed(2)} mm`],
-      ['&Vert;p<sub>e</sub>&Vert; (EE)', `${tel.eePosErrMm.toFixed(2)} mm`],
-      ['RMSE(p<sub>e</sub>)', `${tel.eePosRmseMm.toFixed(2)} mm`],
-      ['&psi;<sub>glass</sub>', `${(tel.glassTiltDeg || 0).toFixed(2)}&deg;`],
-      ['&Vert;&Delta;f<sub>s</sub>&Vert; (Base)', `${(tel.baseReactionN || 0).toFixed(1)} N`],
-      ['&Vert;&tau;<sub>sdk</sub>&Vert;<sub>&infin;</sub>', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
+      ['Base sway', `${(tel.beamTipDispMm || 0).toFixed(2)} mm`],
+      ['Position error', `${tel.eePosErrMm.toFixed(2)} mm`],
+      ['RMSE', `${tel.eePosRmseMm.toFixed(2)} mm`],
+      ['Glass tilt', `${(tel.glassTiltDeg || 0).toFixed(2)}&deg;`],
+      ['Base force', `${(tel.baseReactionN || 0).toFixed(1)} N`],
+      ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
-    chart1Title.innerHTML = 'Base Tip Sway &Vert;&delta;<sub>base</sub>&Vert; vs EE Error &Vert;p<sub>e</sub>&Vert; (mm)';
-    chart1Legend.innerHTML =
-      '<span><i class="dot" style="background:#f27024"></i>Base &Vert;&delta;<sub>base</sub>&Vert;</span>' +
-      '<span><i class="dot" style="background:#52b6e6"></i>EE &Vert;p<sub>e</sub>&Vert;</span>' +
-      '<span><i class="dot" style="background:#34d399"></i>EE RMSE</span>';
+    chart1Title.textContent = 'Base sway vs end-effector error (mm)';
+    chart1Legend.innerHTML = legend([[C_ORANGE, 'Base'], [C_BLUE, 'End effector'], [C_GREEN, 'RMSE']]);
     series = [
-      { color: '#f27024', tag: 'base', digits: 1, get: (p) => p.beamTipDispMm || 0 },
-      { color: '#52b6e6', tag: 'ee', digits: 2, get: (p) => p.eePosErrMm },
-      { color: '#34d399', tag: 'rmse', digits: 2, get: (p) => p.eePosRmseMm },
+      { color: C_ORANGE, tag: '', digits: 1, get: (p) => p.beamTipDispMm || 0 },
+      { color: C_BLUE, tag: '', digits: 2, get: (p) => p.eePosErrMm },
+      { color: C_GREEN, tag: '', digits: 2, get: (p) => p.eePosRmseMm },
     ];
-    chartOpts = {
-      nonNegative: true,
-      includeZero: true,
-      unit: 'mm',
-      guides: [{ value: 0, color: 'rgba(148,163,184,0.35)' }],
-    };
+    chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
   } else {
     boxes = [
-      ['Axial Gap &Delta;z', `${tel.dockingGapMm.toFixed(2)} mm`],
-      ['Contact Force F<sub>n</sub>', `${tel.dockingForceN.toFixed(2)} N`],
-      ['Mating Status', tel.dockingSeated ? 'SEATED' : 'ALIGNING'],
-      ['&Vert;&tau;<sub>sdk</sub>&Vert;<sub>&infin;</sub>', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
+      ['Axial gap', `${tel.dockingGapMm.toFixed(2)} mm`],
+      ['Contact force', `${tel.dockingForceN.toFixed(2)} N`],
+      ['Status', tel.dockingSeated ? 'Seated' : 'Aligning'],
+      ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
-    chart1Title.innerHTML = 'Docking Gap &Delta;z (mm) &amp; Force F<sub>n</sub> (N)';
-    chart1Legend.innerHTML =
-      '<span><i class="dot" style="background:#52b6e6"></i>&Delta;z (mm)</span>' +
-      '<span><i class="dot" style="background:#f27024"></i>F<sub>n</sub> (N)</span>';
+    chart1Title.textContent = 'Docking gap (mm) and contact force (N)';
+    chart1Legend.innerHTML = legend([[C_BLUE, 'Gap'], [C_ORANGE, 'Force']]
+      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base gap']] : []));
     series = [
-      { color: '#52b6e6', tag: 'Δz', digits: 2, get: (p) => p.dockingGapMm },
-      { color: '#f27024', tag: 'Fn', digits: 2, get: (p) => p.dockingForceN },
+      { color: C_BLUE, tag: '', digits: 2, get: (p) => p.dockingGapMm },
+      { color: C_ORANGE, tag: '', digits: 2, get: (p) => p.dockingForceN },
     ];
+    if (tel.ghost) {
+      series.push({ color: C_GHOST, digits: 2, dash: [4, 3], get: (p) => (p.ghost ? p.ghost.dockingGapMm : null) });
+    }
     chartOpts = {
       includeZero: true,
       unit: 'mm / N',
-      guides: [
-        { value: 0, color: 'rgba(52, 211, 153, 0.48)', label: '0 mm seated' },
-      ],
+      guides: [{ value: 0, color: 'rgba(36, 138, 61, 0.55)', label: 'seated' }],
     };
   }
 
-  metricGrid.innerHTML = boxes
-    .map(([k, v]) => `<div class="metric-box"><div class="mlabel">${k}</div><div class="mval">${v}</div></div>`)
-    .join('');
-
+  if (advancedCard.open) {
+    metricGrid.innerHTML = boxes
+      .map(([k, v]) => `<div class="metric-box"><div class="mlabel">${k}</div><div class="mval">${v}</div></div>`)
+      .join('');
+    drawTorqueBars(chart2, tel.tauJ || []);
+  }
   drawLineChart(chart1, series, chartOpts);
-  drawTorqueBars(chart2, tel.tauJ || []);
   updateTeleopHud(tel);
 }
 
@@ -1432,15 +2092,30 @@ let currentParams = {
 };
 
 const appShell = document.getElementById('appShell');
+const advancedCard = document.getElementById('advancedCard');
 const btnToggleSidebar = document.getElementById('btnToggleSidebar');
 const loadingBanner = document.getElementById('loadingBanner');
 const loadingText = document.getElementById('loadingText');
+const loadPoster = document.getElementById('loadPoster');
 const btnPlayPause = document.getElementById('btnPlayPause');
 const btnReset = document.getElementById('btnReset');
 const btnStep = document.getElementById('btnStep');
 const selSpeed = document.getElementById('selSpeed');
-const chkCtrl = document.getElementById('chkCtrl');
-const lblCtrlToggle = document.getElementById('lblCtrlToggle');
+const segCtrlBtns = [...document.querySelectorAll('#segCtrl button')];
+const segCtrlBase = document.getElementById('segCtrlBase');
+const rowGhost = document.getElementById('rowGhost');
+const chkGhost = document.getElementById('chkGhost');
+const chkBaseTrail = document.getElementById('chkBaseTrail');
+const GHOST_DEMOS = new Set([0, 1, 2, 4]);
+// Ghost costs a second physics run: default on for Still Wine / Tracking on desktop only.
+const ghostChoice = {};
+let ghostEnabled = false;
+function ghostDefault(id) {
+  if (ghostChoice[id] !== undefined) return ghostChoice[id];
+  return !IS_SMALL_TOUCH && (id === 0 || id === 1);
+}
+const segBaseBtns = [...document.querySelectorAll('#segBase button')];
+const rowBaseMode = document.getElementById('rowBaseMode');
 const rowKukaMoving = document.getElementById('rowKukaMoving');
 const rowKukaScale = document.getElementById('rowKukaScale');
 const teleopCard = document.getElementById('teleopCard');
@@ -1452,7 +2127,6 @@ const valKtrans = document.getElementById('valKtrans');
 const rngKrot = document.getElementById('rngKrot');
 const valKrot = document.getElementById('valKrot');
 const taskControls = document.getElementById('taskControls');
-const selTeleopTarget = document.getElementById('selTeleopTarget');
 const selTeleopGear = document.getElementById('selTeleopGear');
 const chkCameraFrame = document.getElementById('chkCameraFrame');
 const btnTeleopHome = document.getElementById('btnTeleopHome');
@@ -1478,8 +2152,32 @@ document.querySelectorAll('.keycap[data-key]').forEach((el) => {
 
 const worker = new Worker(new URL('./sim_worker.js', import.meta.url), { type: 'module' });
 
+function syncCtrlSeg() {
+  const on = !!currentParams.controllerEnabled;
+  for (const b of segCtrlBtns) b.classList.toggle('active', (b.dataset.on === '1') === on);
+}
+
+function syncBaseSeg() {
+  const mode = Number(currentParams.teleopTarget || 0);
+  for (const b of segBaseBtns) b.classList.toggle('active', Number(b.dataset.mode) === mode);
+}
+
+// Still Wine / Tracking / Docking / Flexible Beam on the codex/sim-accuracy low level: the SE3 gains
+// come from its scenario (hold_kuka.yaml; docking_kuka.yaml for Docking), so the stiffness sliders do
+// not apply, nor does the Docking wrist-compliance switch (the wrist sensor feedback is docking_kuka's).
+let sceneAligned = false;
+
 function syncCommonInputs() {
-  chkCtrl.checked = currentParams.controllerEnabled;
+  syncCtrlSeg();
+  for (const r of [rngKtrans, rngKrot]) {
+    r.disabled = sceneAligned;
+    r.title = sceneAligned ? 'GRU + MOB low level: SE(3) gains from the sim-accuracy scenario' : '';
+  }
+  const chkComp = document.getElementById('chkComp');
+  if (chkComp) {
+    chkComp.disabled = sceneAligned;
+    chkComp.title = sceneAligned ? 'GRU + MOB low level: wrist sensor feedback from docking_kuka' : '';
+  }
   chkMoving.checked = currentParams.movingSupport;
   rngScale.value = currentParams.supportScale;
   valScale.textContent = `${Number(currentParams.supportScale).toFixed(1)}x`;
@@ -1487,7 +2185,7 @@ function syncCommonInputs() {
   valKtrans.textContent = `${Math.round(currentParams.kTrans)}`;
   rngKrot.value = currentParams.kRot;
   valKrot.textContent = `${Math.round(currentParams.kRot)}`;
-  selTeleopTarget.value = String(currentParams.teleopTarget || 0);
+  syncBaseSeg();
   syncTeleopUiChrome();
 }
 
@@ -1518,16 +2216,13 @@ function syncTeleopUiChrome() {
   const mode = Number(currentParams.teleopTarget || 0);
   const kbdActive = mode === 1;
   teleopHud.classList.toggle('hidden', !kbdActive);
-  teleopBadge.textContent = 'KUKA BASE 6-DOF';
+  teleopBadge.textContent = 'Keyboard';
   if (kbdActive) {
-    teleopHint.innerHTML =
-      'Controlling <strong>KUKA moving base</strong> via 1 kHz DLS IK + smooth braking. <code>WASD/QE</code> move, <code>IKJL/UO</code> tilt/yaw, <code>R</code> smooth home.';
+    teleopHint.innerHTML = 'Drive the base with <code>WASD</code>/<code>QE</code> and <code>IJKL</code>/<code>UO</code>. <code>Tab</code> to exit.';
   } else if (mode === 2) {
-    teleopHint.innerHTML =
-      'Replaying <strong>110 s 4-band sea-wave spectrum</strong> (0.19–0.95 Hz, Catmull-Rom 1 kHz, 6-axis KUKA excitation). Scale with <em>Base Amp</em> or press <code>Tab</code> for Keyboard 6-DOF.';
+    teleopHint.textContent = 'Replays a recorded 110 s sea-wave base motion.';
   } else {
-    teleopHint.innerHTML =
-      'Running <strong>multi-axis sinusoidal wave</strong>. Switch to <em>Recorded Sea Wave (110 s)</em> for experimental wave excitation, or press <code>Tab</code> for 6-DOF keyboard teleop.';
+    teleopHint.innerHTML = 'Multi-axis sinusoidal base motion. Press <code>Tab</code> to drive it yourself.';
   }
   teleopGearPill.textContent = shiftHeld ? `FINE ${(teleopGear * 0.35).toFixed(2)}x` : `${teleopGear.toFixed(1)}x`;
   chkMoving.closest('.control-row')?.classList.toggle('dimmed', kbdActive);
@@ -1622,7 +2317,7 @@ function setBaseMode(nextMode) {
   if (mode === 0 || mode === 2) lastAutoBaseMode = mode;
   currentParams.teleopTarget = mode;
   currentParams.teleopSpeed = effectiveTeleopSpeed();
-  selTeleopTarget.value = String(mode);
+  syncBaseSeg();
   if (mode !== 1) {
     pressedKeys.clear();
     pointerKey = null;
@@ -1645,7 +2340,8 @@ function setTeleopGear(gear) {
 
 function setSidebarCollapsed(collapsed) {
   appShell.classList.toggle('sidebar-collapsed', collapsed);
-  btnToggleSidebar.textContent = collapsed ? 'Show Panel' : 'Hide Panel';
+  const narrow = window.matchMedia('(max-width: 960px)').matches;
+  btnToggleSidebar.textContent = narrow ? (collapsed ? 'Panel' : 'Close') : collapsed ? 'Show panel' : 'Hide panel';
   resize();
 }
 
@@ -1653,7 +2349,7 @@ btnToggleSidebar.onclick = () => {
   setSidebarCollapsed(!appShell.classList.contains('sidebar-collapsed'));
 };
 
-selTeleopTarget.onchange = () => setBaseMode(Number(selTeleopTarget.value));
+for (const b of segBaseBtns) b.onclick = () => setBaseMode(Number(b.dataset.mode));
 selTeleopGear.onchange = () => setTeleopGear(Number(selTeleopGear.value));
 chkCameraFrame.onchange = () => syncTeleopAxes(true);
 btnTeleopHome.onclick = () => {
@@ -1668,6 +2364,15 @@ btnTeleopBrake.onclick = () => {
 };
 
 chkOverlayPath.onchange = syncOverlayVisibility;
+chkGhost.onchange = () => {
+  ghostEnabled = chkGhost.checked;
+  ghostChoice[currentDemoId] = ghostEnabled;
+  history = [];
+  trailCount = 0;
+  baseTrailCount = 0;
+  lastTelemetryTime = -1;
+  worker.postMessage({ type: 'setGhost', enabled: ghostEnabled });
+};
 chkOverlayFrames.onchange = syncOverlayVisibility;
 chkOverlayForce.onchange = syncOverlayVisibility;
 chkOverlayStress.onchange = syncOverlayVisibility;
@@ -1762,29 +2467,29 @@ function renderTaskSpecificControls() {
   const meta = DEMO_META[currentDemoId];
   document.getElementById('demoTitle').textContent = meta.title;
   document.getElementById('demoDesc').textContent = meta.desc;
-  const fastenersLink = document.getElementById('cartpoleFasteners');
-  if (fastenersLink) fastenersLink.hidden = currentDemoId !== 2;
 
   const isBeam = currentDemoId === 5;
   rowKukaMoving.classList.toggle('hidden', isBeam);
   rowKukaScale.classList.toggle('hidden', isBeam);
   teleopCard.classList.toggle('hidden', isBeam);
-  lblCtrlToggle.textContent = isBeam
-    ? 'End-Effector-Rooted (Ours) vs Fixed-Base'
-    : 'SE(3) + ProxQP Active';
+  rowBaseMode.classList.toggle('hidden', isBeam);
+  segCtrlBase.textContent = 'Fixed-base';
+  rowGhost.classList.toggle('hidden', !GHOST_DEMOS.has(currentDemoId));
+  document.getElementById('ctrlHint').textContent = GHOST_DEMOS.has(currentDemoId)
+    ? 'Fixed-base: a conventional controller that assumes the base is still. The ghost runs it under the same base motion.'
+    : 'Fixed-base: a conventional controller that assumes the base is still.';
+  chkGhost.checked = ghostEnabled;
 
-  const camLabels = isBeam
-    ? { hero: 'Hero', workcell: 'Full Span', detail: 'Root Clamp', base: 'Base Joint', ee: 'End-Effector', side: 'Side', top: 'Top' }
-    : { hero: 'Hero', workcell: 'Workcell', detail: 'Foundry Detail', base: 'Mobile Base', ee: 'End-Effector', side: 'Side', top: 'Top' };
-  document.querySelectorAll('.cam-btn').forEach((btn) => {
+  const camLabels = { hero: 'Overview', ee: 'Close-up', top: 'Top' };
+  document.querySelectorAll('.cam-btn[data-cam]').forEach((btn) => {
     if (camLabels[btn.dataset.cam]) btn.textContent = camLabels[btn.dataset.cam];
   });
 
   if (currentDemoId === 0) {
     taskControls.innerHTML = `
       <div class="btn-row">
-        <button class="btn impulse" id="btnPulseX">Push +15 N (X)</button>
-        <button class="btn impulse" id="btnPulseY">Push +15 N (Y)</button>
+        <button class="btn impulse" id="btnPulseX">Push base X</button>
+        <button class="btn impulse" id="btnPulseY">Push base Y</button>
       </div>`;
     document.getElementById('btnPulseX').onclick = () =>
       worker.postMessage({ type: 'basePulse', fx: 15, fy: 0, fz: 0, duration: 0.25 });
@@ -1793,15 +2498,15 @@ function renderTaskSpecificControls() {
   } else if (currentDemoId === 1) {
     taskControls.innerHTML = `
       <div class="control-row">
-        <label for="selTrackMode">Trajectory</label>
+        <label for="selTrackMode">Path</label>
         <select id="selTrackMode">
-          <option value="0" ${currentParams.trackingMode === 0 ? 'selected' : ''}>Figure-8 + Circle (YZ)</option>
-          <option value="1" ${currentParams.trackingMode === 1 ? 'selected' : ''}>Line + XY Circle</option>
+          <option value="0" ${currentParams.trackingMode === 0 ? 'selected' : ''}>Taiji + circle</option>
+          <option value="1" ${currentParams.trackingMode === 1 ? 'selected' : ''}>Line + circle</option>
         </select>
       </div>
       <div class="btn-row">
-        <button class="btn impulse" id="btnPulseX">Push +15 N (X)</button>
-        <button class="btn impulse" id="btnPulseY">Push +15 N (Y)</button>
+        <button class="btn impulse" id="btnPulseX">Push base X</button>
+        <button class="btn impulse" id="btnPulseY">Push base Y</button>
       </div>`;
     document.getElementById('selTrackMode').onchange = (e) => {
       currentParams.trackingMode = Number(e.target.value);
@@ -1816,11 +2521,11 @@ function renderTaskSpecificControls() {
   } else if (currentDemoId === 2) {
     taskControls.innerHTML = `
       <div class="control-row">
-        <label class="toggle"><input type="checkbox" id="chkUpright" ${currentParams.pendulumStartUpright ? 'checked' : ''} /> Start Near Upright (Push Recovery)</label>
+        <label class="toggle"><input type="checkbox" id="chkUpright" ${currentParams.pendulumStartUpright ? 'checked' : ''} /> Start upright</label>
       </div>
       <div class="btn-row">
-        <button class="btn impulse" id="btnPushP">Push +2.5 rad/s</button>
-        <button class="btn impulse" id="btnPushN">Push -2.5 rad/s</button>
+        <button class="btn impulse" id="btnPushP">Push +</button>
+        <button class="btn impulse" id="btnPushN">Push −</button>
       </div>`;
     document.getElementById('chkUpright').onchange = (e) => {
       currentParams.pendulumStartUpright = e.target.checked;
@@ -1836,25 +2541,25 @@ function renderTaskSpecificControls() {
     const estHz = (1.63 * Math.sqrt(curE / 30.0)).toFixed(2);
     taskControls.innerHTML = `
       <div class="control-row">
-        <label for="selBeamMode">Coupling Task</label>
+        <label for="selBeamMode">Task</label>
         <select id="selBeamMode">
-          <option value="0" ${currentParams.beamTaskMode === 0 ? 'selected' : ''}>Self-Excited Tracking (Single Arm)</option>
-          <option value="1" ${currentParams.beamTaskMode === 1 ? 'selected' : ''}>World Hold (Tap / Disturber)</option>
+          <option value="0" ${currentParams.beamTaskMode === 0 ? 'selected' : ''}>Self-excited tracking</option>
+          <option value="1" ${currentParams.beamTaskMode === 1 ? 'selected' : ''}>Hold in world</option>
         </select>
       </div>
       <div class="control-row">
-        <label title="3.5 m Euler-Bernoulli cantilever modulus E (30 GPa = paper reference ~1.6 Hz)">Beam E</label>
+        <label title="Young's modulus of the beam">Beam stiffness</label>
         <input type="range" id="rngBeamE" min="4" max="30" step="1" value="${curE}" />
-        <span class="val" id="valBeamE" style="min-width:86px;">${Math.round(curE)} GPa (${estHz} Hz)</span>
+        <span class="val" id="valBeamE" style="min-width:92px;">${Math.round(curE)} GPa (${estHz} Hz)</span>
       </div>
       <div class="control-row">
-        <label class="toggle" title="Attach unknown 3-DOF mid-span disturber arm at x = 2.19 m (controller is blind to it)">
-          <input type="checkbox" id="chkBeamDisturber" ${currentParams.beamDisturber ? 'checked' : ''} /> Unknown Beam Disturber (x=2.19 m)
+        <label class="toggle" title="A second arm on the beam that the controller does not know about">
+          <input type="checkbox" id="chkBeamDisturber" ${currentParams.beamDisturber ? 'checked' : ''} /> Unknown disturber arm
         </label>
       </div>
       <div class="btn-row">
-        <button class="btn impulse" id="btnStrikeZ" title="Apply smooth 55 N downward impact to beam tip">Strike Beam (-55 N Z)</button>
-        <button class="btn impulse" id="btnStrikeY" title="Apply 3D lateral+vertical impact to beam tip">Lateral Strike (+45 N Y)</button>
+        <button class="btn impulse" id="btnStrikeZ" title="Strike the beam tip downward">Strike down</button>
+        <button class="btn impulse" id="btnStrikeY" title="Strike the beam tip sideways">Strike sideways</button>
       </div>`;
     document.getElementById('selBeamMode').onchange = (e) => {
       currentParams.beamTaskMode = Number(e.target.value);
@@ -1862,6 +2567,7 @@ function renderTaskSpecificControls() {
       trailCount = 0;
       worker.postMessage({ type: 'setParams', params: { beamTaskMode: currentParams.beamTaskMode } });
       syncOverlayVisibility();
+      syncPathCamButton();
     };
     document.getElementById('rngBeamE').oninput = (e) => {
       const val = Number(e.target.value);
@@ -1882,15 +2588,15 @@ function renderTaskSpecificControls() {
   } else {
     taskControls.innerHTML = `
       <div class="control-row">
-        <label for="selDock">Initial Offset</label>
+        <label for="selDock">Start offset</label>
         <select id="selDock">
           <option value="0" ${currentParams.dockingCase === 0 ? 'selected' : ''}>Aligned</option>
           <option value="1" ${currentParams.dockingCase === 1 ? 'selected' : ''}>Yaw +5&deg;</option>
-          <option value="2" ${currentParams.dockingCase === 2 ? 'selected' : ''}>Combined (Yaw+Roll+XY)</option>
+          <option value="2" ${currentParams.dockingCase === 2 ? 'selected' : ''}>Combined</option>
         </select>
       </div>
       <div class="control-row">
-        <label class="toggle"><input type="checkbox" id="chkComp" ${currentParams.dockingWristCompliance ? 'checked' : ''} /> Wrist Force Compliance</label>
+        <label class="toggle"><input type="checkbox" id="chkComp" ${currentParams.dockingWristCompliance ? 'checked' : ''} /> Wrist compliance</label>
       </div>`;
     document.getElementById('selDock').onchange = (e) => {
       currentParams.dockingCase = Number(e.target.value);
@@ -1905,7 +2611,7 @@ function renderTaskSpecificControls() {
 }
 
 function applyCamera(c, activePreset = null, smooth = true) {
-  document.querySelectorAll('.cam-btn').forEach((btn) => {
+  document.querySelectorAll('.cam-btn[data-cam]').forEach((btn) => {
     btn.classList.toggle('active', activePreset !== null && btn.dataset.cam === activePreset);
   });
   const targetFov = c.fov || 30;
@@ -1933,6 +2639,10 @@ function applyCamera(c, activePreset = null, smooth = true) {
 }
 
 function setCameraPreset(preset, smooth = true) {
+  if (preset === 'path' && pathCam) {
+    applyCamera(pathCam, 'path', smooth);
+    return;
+  }
   const presets = getCameraPresetsForDemo(currentDemoId);
   const c = presets[preset] || DEMO_META[currentDemoId].cam;
   applyCamera(c, presets[preset] ? preset : null, smooth);
@@ -1954,17 +2664,23 @@ function selectDemo(id, extraOverrides = null) {
   lastTelemetryTime = -1;
   isRunning = true;
   btnPlayPause.textContent = 'Pause';
+  document.getElementById('demoTitle').textContent = DEMO_META[resolvedId].title;
+  document.getElementById('demoDesc').textContent = DEMO_META[resolvedId].desc;
   loadingText.textContent = `Loading ${DEMO_META[resolvedId].title}…`;
+  loadPoster.style.backgroundImage = `url(./posters/demo-${resolvedId}.jpg)`;
   loadingBanner.classList.remove('hidden');
+  endPush();
 
   const mergedOverride = {
     ...(DEMO_META[resolvedId].paramsOverride || {}),
     ...(extraOverrides || {}),
   };
+  ghostEnabled = GHOST_DEMOS.has(resolvedId) && ghostDefault(resolvedId);
   worker.postMessage({
     type: 'loadDemo',
     loadId,
     demoId: resolvedId,
+    ghost: ghostEnabled,
     paramsOverride: Object.keys(mergedOverride).length ? mergedOverride : null,
   });
 }
@@ -1981,24 +2697,31 @@ worker.onmessage = async (e) => {
     if (!assetsReady) await ensureVisualAssets();
     if (msg.loadId !== activeLoadId) return;
     currentParams = msg.params;
+    sceneAligned = !!msg.aligned;
     if (currentParams.teleopTarget === 0 || currentParams.teleopTarget === 2) {
       lastAutoBaseMode = currentParams.teleopTarget;
     }
     syncCommonInputs();
     renderTaskSpecificControls();
-    buildSceneMeshes(msg.bodyNames, msg.geoms, msg.refPath);
+    buildSceneMeshes(msg.bodyNames, msg.geoms, msg.refPath, msg.bodyRootIds);
     if (msg.initialFrame) {
       applyFrame(msg.initialFrame);
     }
     const useSmooth = hasRenderedFirstScene;
     const presets = getCameraPresetsForDemo(currentDemoId);
-    if (pendingInitialCam && presets[pendingInitialCam]) {
+    if (pendingInitialCam && typeof pendingInitialCam === 'object') {
+      applyCamera(pendingInitialCam, null, useSmooth);
+      pendingInitialCam = null;
+    } else if (pendingInitialCam && presets[pendingInitialCam]) {
       setCameraPreset(pendingInitialCam, useSmooth);
       pendingInitialCam = null;
+    } else if (currentDemoId === 1 && pathCam) {
+      applyCamera(pathCam, 'path', useSmooth);
     } else {
       const cam = DEMO_META[currentDemoId].cam;
       applyCamera(cam, cam.preset || null, useSmooth);
     }
+    if (!hasRenderedFirstScene) setTimeout(maybeStartTour, 1400);
     hasRenderedFirstScene = true;
     loadingBanner.classList.add('hidden');
     worker.postMessage({ type: 'beginSim', loadId: msg.loadId });
@@ -2016,11 +2739,108 @@ worker.onmessage = async (e) => {
   }
 };
 
+// --- Mouse / touch push: drag a body to pull it with a spring (MuJoCo-viewer style) ---
+const viewportWrap = canvas.parentElement;
+const btnPushMode = document.getElementById('btnPushMode');
+const pushHint = document.getElementById('pushHint');
+const forceLabel = document.getElementById('forceLabel');
+const raycaster = new THREE.Raycaster();
+const pointerNdc = new THREE.Vector2();
+const dragPlane = new THREE.Plane();
+const tmpProj = new THREE.Vector3();
+let pushMode = false;
+let pushDrag = null;
+
+function setPushMode(on) {
+  pushMode = on;
+  btnPushMode.classList.toggle('active', on);
+  viewportWrap.classList.toggle('push-mode', on);
+}
+btnPushMode.onclick = () => setPushMode(!pushMode);
+setTimeout(() => pushHint.classList.add('gone'), 9000);
+
+function rayFromEvent(ev) {
+  const r = canvas.getBoundingClientRect();
+  pointerNdc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(pointerNdc, camera);
+}
+
+function pickBody(ev) {
+  rayFromEvent(ev);
+  for (const h of raycaster.intersectObject(robotGroup, true)) {
+    let o = h.object;
+    while (o && o.userData.bodyId === undefined) o = o.parent;
+    if (!o) continue;
+    const id = o.userData.bodyId;
+    if (id > 0 && bodyGroups[id]) return { bodyId: id, point: h.point.clone() };
+  }
+  return null;
+}
+
+viewportWrap.addEventListener(
+  'pointerdown',
+  (ev) => {
+    if (ev.target !== canvas || ev.button !== 0 || pushDrag) return;
+    if (!(pushMode || ev.ctrlKey || ev.metaKey)) return;
+    const hit = pickBody(ev);
+    if (!hit) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    const g = bodyGroups[hit.bodyId];
+    g.updateMatrixWorld(true);
+    const local = g.worldToLocal(hit.point.clone());
+    camera.getWorldDirection(tmpVecB);
+    dragPlane.setFromNormalAndCoplanarPoint(tmpVecB, hit.point);
+    pushDrag = { pointerId: ev.pointerId, target: hit.point.clone() };
+    controls.enabled = false;
+    viewportWrap.classList.add('dragging');
+    pushHint.classList.add('gone');
+    worker.postMessage({
+      type: 'perturbStart',
+      body: hit.bodyId,
+      local: [local.x, local.y, local.z],
+      target: [hit.point.x, hit.point.y, hit.point.z],
+    });
+  },
+  { capture: true }
+);
+window.addEventListener('pointermove', (ev) => {
+  if (!pushDrag || ev.pointerId !== pushDrag.pointerId) return;
+  rayFromEvent(ev);
+  if (raycaster.ray.intersectPlane(dragPlane, tmpVecA)) {
+    pushDrag.target.copy(tmpVecA);
+    worker.postMessage({ type: 'perturbTarget', target: [tmpVecA.x, tmpVecA.y, tmpVecA.z] });
+  }
+});
+function endPush(ev) {
+  if (!pushDrag || (ev && ev.pointerId !== undefined && ev.pointerId !== pushDrag.pointerId)) return;
+  pushDrag = null;
+  controls.enabled = true;
+  viewportWrap.classList.remove('dragging');
+  worker.postMessage({ type: 'perturbEnd' });
+  if (perturbViz) perturbViz.group.visible = false;
+  forceLabel.classList.add('hidden');
+}
+window.addEventListener('pointerup', endPush);
+window.addEventListener('pointercancel', endPush);
+canvas.addEventListener('contextmenu', (e) => {
+  if (pushDrag || e.ctrlKey) e.preventDefault();
+});
+
+function placeForceLabel() {
+  if (!pushDrag || forceLabel.classList.contains('hidden')) return;
+  tmpProj.copy(pushDrag.target).project(camera);
+  const r = canvas.getBoundingClientRect();
+  const w = viewportWrap.getBoundingClientRect();
+  forceLabel.style.left = `${(tmpProj.x * 0.5 + 0.5) * r.width + (r.left - w.left)}px`;
+  forceLabel.style.top = `${(-tmpProj.y * 0.5 + 0.5) * r.height + (r.top - w.top)}px`;
+}
+
 // Wire UI events
 document.querySelectorAll('.demo-tab').forEach((btn) => {
   btn.onclick = () => selectDemo(Number(btn.dataset.demo));
 });
-document.querySelectorAll('.cam-btn').forEach((btn) => {
+document.querySelectorAll('.cam-btn[data-cam]').forEach((btn) => {
   btn.onclick = () => setCameraPreset(btn.dataset.cam, true);
 });
 
@@ -2030,6 +2850,7 @@ btnPlayPause.onclick = () => {
   worker.postMessage({ type: 'setRunning', running: isRunning });
 };
 btnReset.onclick = () => {
+  endPush();
   history = [];
   trailCount = 0;
   lastTelemetryTime = -1;
@@ -2042,10 +2863,24 @@ btnStep.onclick = () => {
 };
 selSpeed.onchange = () => worker.postMessage({ type: 'setSpeed', speed: Number(selSpeed.value) });
 
-chkCtrl.onchange = () => {
-  currentParams.controllerEnabled = chkCtrl.checked;
-  worker.postMessage({ type: 'setParams', params: { controllerEnabled: chkCtrl.checked } });
-};
+for (const b of segCtrlBtns) {
+  b.onclick = () => {
+    currentParams.controllerEnabled = b.dataset.on === '1';
+    syncCtrlSeg();
+    lastReadoutMs = 0;
+    if ([0, 1, 4, 5].includes(currentDemoId)) {
+      // Ours runs the elastic sim-accuracy plant, the fixed-base baseline the rigid scene: reload.
+      const keep = ['controllerEnabled', 'teleopTarget', 'trackingMode', 'movingSupport', 'supportScale',
+        'beamTaskMode', 'beamDisturber', 'beamYoungGpa', 'dockingCase'];
+      selectDemo(currentDemoId, Object.fromEntries(keep.map((k) => [k, currentParams[k]])));
+      return;
+    }
+    worker.postMessage({ type: 'setParams', params: { controllerEnabled: currentParams.controllerEnabled } });
+  };
+}
+advancedCard.addEventListener('toggle', () => {
+  if (advancedCard.open && history.length) updateHudAndPlots(history.pop(), 1);
+});
 chkMoving.onchange = () => {
   currentParams.movingSupport = chkMoving.checked;
   worker.postMessage({ type: 'setParams', params: { movingSupport: chkMoving.checked } });
@@ -2065,6 +2900,170 @@ rngKrot.oninput = () => {
   valKrot.textContent = `${Math.round(currentParams.kRot)}`;
   worker.postMessage({ type: 'setParams', params: { kRot: currentParams.kRot } });
 };
+
+// --- Share: copy a deep link that reproduces this demo, its settings and the current camera ---
+const btnShare = document.getElementById('btnShare');
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+
+function showToast(text) {
+  toastEl.textContent = text;
+  toastEl.classList.remove('hidden');
+  toastEl.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toastEl.style.opacity = '0';
+    setTimeout(() => toastEl.classList.add('hidden'), 260);
+  }, 1800);
+}
+
+function buildShareUrl() {
+  const u = new URL(window.location.href);
+  u.search = '';
+  u.hash = '';
+  const q = u.searchParams;
+  q.set('demo', String(currentDemoId));
+  const bm = Number(currentParams.teleopTarget || 0);
+  if (currentDemoId !== 5) q.set('base', bm === 2 ? 'wave' : bm === 1 ? 'kbd' : 'sine');
+  if (!currentParams.controllerEnabled) q.set('ctrl', '0');
+  if (currentDemoId === 1) q.set('track', String(Number(currentParams.trackingMode || 0)));
+  if (currentDemoId === 4) q.set('dock', String(Number(currentParams.dockingCase || 0)));
+  if (currentDemoId === 5) {
+    q.set('beamE', String(Number(currentParams.beamYoungGpa || 8)));
+    q.set('beamMode', String(Number(currentParams.beamTaskMode || 0)));
+    q.set('disturber', currentParams.beamDisturber ? '1' : '0');
+  }
+  if (GHOST_DEMOS.has(currentDemoId)) q.set('ghost', ghostEnabled ? '1' : '0');
+  const r = (v) => String(Math.round(v * 1000) / 1000);
+  q.set('view', [...camera.position.toArray(), ...controls.target.toArray()].map(r).concat([Math.round(camera.fov)]).join(','));
+  return u.toString();
+}
+
+btnShare.onclick = async () => {
+  const url = buildShareUrl();
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link to this view copied');
+  } catch {
+    window.prompt('Copy this link:', url);
+  }
+};
+
+// --- First-visit tour (three steps, skippable, remembered in localStorage) ---
+const TOUR_KEY = 'deer-wbc-tour-v1';
+const tourEl = document.getElementById('tour');
+const tourRing = document.getElementById('tourRing');
+const tourCard = document.getElementById('tourCard');
+const tourText = document.getElementById('tourText');
+const tourStepEl = document.getElementById('tourStep');
+const tourNext = document.getElementById('tourNext');
+const tourSkip = document.getElementById('tourSkip');
+const TOUR_STEPS = [
+  {
+    anchor: '#segCtrl',
+    text: 'Compare our controller with a conventional <b>fixed-base</b> one. The translucent arm is the fixed-base controller under the same base motion.',
+  },
+  {
+    anchor: '#btnPushMode',
+    text: IS_SMALL_TOUCH
+      ? 'Push the glass or the arm yourself: turn on <b>Push</b> (hand icon) and drag it.'
+      : 'Push the glass or the arm yourself: turn on <b>Push</b> and drag, or hold Ctrl / &#8984; and drag.',
+  },
+  {
+    anchor: '#readout',
+    text: 'Live numbers: end-effector error, how much of its friction the free-standing glass uses, and how far the wine surface tilts.',
+  },
+];
+let tourIdx = -1;
+let tourSteps = [];
+
+function anchorRect(sel) {
+  const el = document.querySelector(sel);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.top > window.innerHeight) return null;
+  return r;
+}
+
+function placeTour() {
+  const step = tourSteps[tourIdx];
+  const r = step && anchorRect(step.anchor);
+  if (!r) {
+    endTour();
+    return;
+  }
+  const pad = 6;
+  Object.assign(tourRing.style, {
+    left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + 2 * pad}px`, height: `${r.height + 2 * pad}px`,
+  });
+  const cw = tourCard.offsetWidth || 280;
+  const ch = tourCard.offsetHeight || 120;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let left = r.left + r.width / 2 - cw / 2;
+  let top = r.bottom + 14;
+  if (top + ch > vh - 12) top = r.top - ch - 14;
+  if (top < 12) {
+    top = Math.min(vh - ch - 12, Math.max(12, r.top));
+    left = r.left - cw - 16 >= 12 ? r.left - cw - 16 : r.right + 16;
+  }
+  left = Math.min(vw - cw - 12, Math.max(12, left));
+  tourCard.style.left = `${left}px`;
+  tourCard.style.top = `${top}px`;
+}
+
+function showTourStep(i) {
+  tourIdx = i;
+  if (i >= tourSteps.length) {
+    endTour();
+    return;
+  }
+  tourText.innerHTML = tourSteps[i].text;
+  tourStepEl.textContent = `${i + 1} / ${tourSteps.length}`;
+  tourNext.textContent = i === tourSteps.length - 1 ? 'Done' : 'Next';
+  tourEl.classList.remove('hidden');
+  placeTour();
+}
+
+function endTour() {
+  tourEl.classList.add('hidden');
+  tourIdx = -1;
+  try {
+    localStorage.setItem(TOUR_KEY, '1');
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function maybeStartTour() {
+  let seen = false;
+  try {
+    seen = localStorage.getItem(TOUR_KEY) === '1';
+  } catch {
+    seen = true;
+  }
+  if (seen || new URLSearchParams(window.location.search).get('tour') === '0' || navigator.webdriver) return;
+  tourSteps = TOUR_STEPS.filter((st) => anchorRect(st.anchor));
+  if (tourSteps.length) showTourStep(0);
+}
+
+tourNext.onclick = () => showTourStep(tourIdx + 1);
+tourSkip.onclick = endTour;
+window.addEventListener('resize', () => {
+  if (tourIdx >= 0) placeTour();
+});
+
+// --- Pause the simulation while the tab is hidden (saves CPU; resumes where it was) ---
+let pausedByHidden = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && isRunning) {
+    pausedByHidden = true;
+    worker.postMessage({ type: 'setRunning', running: false });
+  } else if (!document.hidden && pausedByHidden) {
+    pausedByHidden = false;
+    worker.postMessage({ type: 'setRunning', running: true });
+  }
+});
 
 function resize() {
   const wrap = canvas.parentElement;
@@ -2095,6 +3094,7 @@ function animate() {
   }
   headlight.position.copy(camera.position);
   headlight.target.position.copy(controls.target);
+  placeForceLabel();
   renderer.render(scene, camera);
 }
 animate();
@@ -2136,6 +3136,7 @@ if (initDemo === 5) {
     bootOverrides.beamDisturber = qs.get('disturber') === '1';
   }
 }
+if (qs.has('ghost')) ghostChoice[initDemo] = qs.get('ghost') !== '0';
 if (qs.get('overlays') === '0') {
   chkOverlayPath.checked = false;
   chkOverlayFrames.checked = false;
@@ -2143,12 +3144,17 @@ if (qs.get('overlays') === '0') {
   chkOverlayStress.checked = false;
   chkOverlayDeflect5x.checked = false;
 }
-if (qs.get('sidebar') === '0') {
-  setSidebarCollapsed(true);
-}
+setSidebarCollapsed(
+  qs.get('sidebar') === '0' || (qs.get('sidebar') !== '1' && window.matchMedia('(max-width: 960px)').matches)
+);
 const camParam = (qs.get('cam') || '').toLowerCase();
 if (getCameraPresetsForDemo(initDemo)[camParam]) {
   pendingInitialCam = camParam;
+}
+// Explicit view: ?view=px,py,pz,tx,ty,tz[,fov]
+const viewParam = (qs.get('view') || '').split(',').map(Number);
+if (viewParam.length >= 6 && viewParam.every(Number.isFinite)) {
+  pendingInitialCam = { pos: viewParam.slice(0, 3), target: viewParam.slice(3, 6), fov: viewParam[6] || 30 };
 }
 
 ensureVisualAssets().catch((err) => {
