@@ -12,8 +12,8 @@
   --ok: #248a3d;
   --warn: #c93400;
   --danger: #d70015;
-  --font: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-  --display: 'Inter Tight', 'Inter Display', Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+  --font: 'Inter Web', Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --display: 'Inter Display Web', 'Inter Display', 'Inter Web', Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, 'JetBrains Mono', monospace;
 }
 
@@ -77,6 +77,43 @@ sub, sup { font-size: 0.74em; line-height: 0; }
   text-decoration: none;
   white-space: nowrap;
 }
+.brand-back {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--faint);
+  font-weight: 500;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+.brand:hover .brand-back { transform: translateX(-3px); color: var(--text); }
+
+/* No WebGL: the demo recordings in place of the simulator (main.js showRecordingsInstead). */
+body.nogl .viewport-wrap > :not(.loading-banner),
+body.nogl #btnToggleSidebar { display: none !important; }
+body.nogl .loading-banner { background: linear-gradient(180deg, #fbfbfd 0%, #ececef 100%); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.nogl-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* Clips are 720x460: fill wide viewports edge to edge, letterbox narrow ones. */
+@media (min-aspect-ratio: 3/2) { .nogl-video { object-fit: cover; } }
+.nogl-card {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: min(400px, calc(100% - 40px));
+  padding: 18px 20px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: saturate(1.8) blur(20px);
+  -webkit-backdrop-filter: saturate(1.8) blur(20px);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 12px 40px rgba(0, 0, 0, 0.1);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.nogl-kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+.nogl-title { margin-top: 4px; font: 600 19px/1.25 var(--display); letter-spacing: -0.015em; color: var(--text); }
+.nogl-card p { margin: 8px 0 12px; }
+.nogl-card b { color: var(--text); font-weight: 500; }
+.nogl-back { color: var(--accent); text-decoration: none; font-size: 13.5px; }
+.nogl-back:hover { text-decoration: underline; }
 .demo-tabs {
   display: flex;
   gap: 2px;
@@ -87,6 +124,12 @@ sub, sup { font-size: 0.74em; line-height: 0; }
   scrollbar-width: none;
 }
 .demo-tabs::-webkit-scrollbar { display: none; }
+/* Fade whichever edge hides more tabs (main.js toggles fade-l / fade-r on narrow screens). */
+.demo-tabs { --fade-l: 0px; --fade-r: 0px; scroll-padding-inline: 24px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%); }
+.demo-tabs.fade-l { --fade-l: 28px; }
+.demo-tabs.fade-r { --fade-r: 28px; }
 .demo-tab {
   background: transparent;
   color: var(--text-soft);
@@ -554,6 +597,7 @@ select {
 canvas.chart { width: 100%; height: 132px; display: block; }
 .chart-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); margin-top: 6px; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.dash { display: inline-block; width: 12px; height: 0; margin: 0 5px 3px 0; border-top: 2px dashed currentColor; vertical-align: middle; }
 
 /* Advanced (collapsed by default) */
 .advanced { padding: 0; }

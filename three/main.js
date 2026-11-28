@@ -55,7 +55,7 @@ const DEMO_META = {
     // 3: the aligned low level's warm-up, the pendulum held by the hand (cartpole_kuka warmup_s).
     phaseNames: { 0: 'Kick', 1: 'Swing-up', 2: 'Balancing', 3: 'Held' },
     paramsOverride: { kTrans: 160, kRot: 80, supportScale: 0.3 },
-    cam: { pos: [-0.22, 0.02, 2.74], target: [-0.46, 1.18, 2.62], fov: 35 },
+    cam: { pos: [-1.14, -0.41, 2.85], target: [-0.46, 1.18, 2.62], fov: 30 },
   },
   4: {
     title: 'Docking',
@@ -92,13 +92,47 @@ const canvas = document.getElementById('viewport');
     ok = false;
   }
   if (!ok) {
-    document.getElementById('loadingText').textContent =
-      'WebGL is disabled in this browser, so the 3D simulator cannot run here. Please open this page in Chrome, Edge, Safari or Firefox with hardware acceleration on.';
-    document.querySelector('.load-card .spinner')?.remove();
-    document.querySelector('.load-progress-track')?.remove();
+    showRecordingsInstead();
     throw new Error('WebGL unavailable');
   }
 })();
+
+// No WebGL: play the project page's recording of each demo (the tabs switch clips) instead of the simulator.
+function showRecordingsInstead() {
+  const clips = {
+    0: ['Still Wine', '../media/demo-0.mp4', '../media/demo-0.jpg'],
+    1: ['Tracking', '../media/demo-1.mp4', '../media/demo-1.jpg'],
+    2: ['Cart-Pole', '../media/demo-2.mp4', '../media/demo-2.jpg'],
+    4: ['Docking', '../media/demo-4.mp4', '../media/demo-4.jpg'],
+    5: ['Flexible Beam', '../media/demo-5.mp4', '../media/demo-5.jpg'],
+  };
+  const asked = Number(new URLSearchParams(window.location.search).get('demo'));
+  document.body.classList.add('nogl');
+  document.getElementById('appShell').classList.add('sidebar-collapsed');
+  const banner = document.getElementById('loadingBanner');
+  banner.innerHTML = `
+    <video class="nogl-video" autoplay muted loop playsinline></video>
+    <div class="nogl-card">
+      <div class="nogl-kicker">Recording</div>
+      <div class="nogl-title">WebGL is off in this browser.</div>
+      <p>This is a recording of <b class="nogl-name"></b> from the simulator. To run it live, open this page in a recent
+        Chrome, Edge, Safari or Firefox with hardware acceleration on.</p>
+      <a class="nogl-back" href="../">‹ Back to the project page</a>
+    </div>`;
+  const video = banner.querySelector('.nogl-video');
+  const show = (id) => {
+    const [title, src, poster] = clips[id] || clips[0];
+    video.poster = poster;
+    video.src = src;
+    video.play().catch(() => {});
+    banner.querySelector('.nogl-name').textContent = title;
+    document.querySelectorAll('.demo-tab').forEach((b) => b.classList.toggle('active', Number(b.dataset.demo) === (clips[id] ? id : 0)));
+  };
+  document.querySelectorAll('.demo-tab').forEach((b) => {
+    b.onclick = () => show(Number(b.dataset.demo));
+  });
+  show(asked);
+}
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 const IS_SMALL_TOUCH = window.matchMedia('(max-width: 960px), (pointer: coarse)').matches;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_SMALL_TOUCH ? 1.5 : 2));
@@ -1251,12 +1285,14 @@ let ghostBodies = [];
 let glassBodyId = -1;
 let link0BodyId = -1;
 const GHOST_SKIP = new Set(['link0', 'transition_plate']);
+// Site-wide colour rule: the fixed-base baseline is red, here a translucent red ghost.
 const ghostMat = new THREE.MeshStandardMaterial({
-  color: 0x8fa8d8,
-  roughness: 0.55,
+  color: 0xe4505a,
+  emissive: 0x5a0008,
+  roughness: 0.6,
   metalness: 0.0,
   transparent: true,
-  opacity: 0.36,
+  opacity: 0.3,
   depthWrite: false,
 });
 
@@ -1632,6 +1668,12 @@ function windowRms(get, windowS = 1.0) {
 
 let lastAlignedError = '';
 
+// toFixed without a "-0.0": values that round to zero print as zero.
+function fixedNoNegZero(v, digits) {
+  const t = Number(v).toFixed(digits);
+  return /^-0\.?0*$/.test(t) ? t.slice(1) : t;
+}
+
 function updateReadout(tel) {
   const now = performance.now();
   if (now - lastReadoutMs < 150) return;
@@ -1648,10 +1690,10 @@ function updateReadout(tel) {
   const g = tel.ghost;
   if (currentDemoId === 2) {
     readoutLabel.textContent = 'Pendulum angle';
-    readoutValue.textContent = tel.pendulumAngleDeg.toFixed(1);
+    readoutValue.textContent = fixedNoNegZero(tel.pendulumAngleDeg, 1);
     readoutUnit.textContent = '°';
     readoutSub.textContent = g
-      ? `Fixed-base: ${g.pendulumAngleDeg.toFixed(0)}°`
+      ? `Fixed-base: ${fixedNoNegZero(g.pendulumAngleDeg, 0)}°`
       : DEMO_META[2].phaseNames[tel.phase] ?? '';
   } else if (currentDemoId === 4) {
     readoutLabel.textContent = 'Docking gap';
@@ -1891,7 +1933,7 @@ function drawLineChart(canvasEl, seriesList, opts = {}) {
     const s = seriesList[i];
     const v = (s.raw || s.get)(lastPt);
     if (v === null || !Number.isFinite(v)) continue;
-    const txt = `${s.tag ? `${s.tag} ` : ''}${v.toFixed(s.digits ?? 2)}`;
+    const txt = `${s.tag ? `${s.tag} ` : ''}${fixedNoNegZero(v, s.digits ?? 2)}`;
     ctx.fillStyle = s.color;
     ctx.fillText(txt, pillX, padT + 8);
     pillX -= ctx.measureText(txt).width + 9;
@@ -1958,14 +2000,17 @@ function updateHudAndPlots(tel, rtf) {
   updateReadout(tel);
 
   const C_BLUE = '#0071e3';
-  const C_GREEN = '#34c759';
-  const C_ORANGE = '#ff9500';
+  // Statistics (RMSE, dashed) and secondary signals (base sway, contact force) in neutral greys.
+  const C_STAT = '#a1a1a6';
+  const C_SIGNAL = '#6e6e73';
+  const STAT_DASH = [5, 3];
   // Site-wide colour rule: blue is our controller, red the fixed-base baseline (ghost or switched off).
   const C_RED = '#d70015';
   const C_GHOST = C_RED;
   const C_MAIN = currentParams.controllerEnabled ? C_BLUE : C_RED;
+  // [colour, label, dashed?]: a dashed series gets a short dashed swatch instead of a dot.
   const legend = (items) =>
-    items.map(([c, t]) => `<span><i class="dot" style="background:${c}"></i>${t}</span>`).join('');
+    items.map(([c, t, dashed]) => `<span><i class="${dashed ? 'dash' : 'dot'}" style="${dashed ? 'color' : 'background'}:${c}"></i>${t}</span>`).join('');
 
   let boxes = [];
   let series = [];
@@ -1983,7 +2028,7 @@ function updateHudAndPlots(tel, rtf) {
       // Ours vs. the fixed-base ghost differ by orders of magnitude: log axis
       const lg = (v) => Math.log10(Math.max(0.05, v));
       chart1Title.textContent = 'End-effector error (mm, log scale)';
-      chart1Legend.innerHTML = legend([[C_MAIN, 'Ours'], [C_GHOST, 'Fixed-base']]);
+      chart1Legend.innerHTML = legend([[C_MAIN, 'Ours'], [C_GHOST, 'Fixed-base', true]]);
       series = [
         { color: C_MAIN, digits: 2, get: (p) => lg(p.eePosErrMm), raw: (p) => p.eePosErrMm },
         {
@@ -1995,23 +2040,23 @@ function updateHudAndPlots(tel, rtf) {
       chartOpts = { log: true, unit: 'mm' };
     } else {
       chart1Title.textContent = 'End-effector error (mm)';
-      chart1Legend.innerHTML = legend([[C_MAIN, 'Error'], [C_GREEN, 'RMSE']]);
+      chart1Legend.innerHTML = legend([[C_MAIN, 'Error'], [C_STAT, 'RMSE', true]]);
       series = [
         { color: C_MAIN, tag: '', digits: 2, get: (p) => p.eePosErrMm },
-        { color: C_GREEN, tag: '', digits: 2, get: (p) => p.eePosRmseMm },
+        { color: C_STAT, tag: '', digits: 2, dash: STAT_DASH, get: (p) => p.eePosRmseMm },
       ];
       chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
     }
   } else if (currentDemoId === 2) {
     boxes = [
-      ['Angle', `${tel.pendulumAngleDeg.toFixed(1)}&deg;`],
+      ['Angle', `${fixedNoNegZero(tel.pendulumAngleDeg, 1)}&deg;`],
       ['Angular rate', `${tel.pendulumVelRadS.toFixed(2)} rad/s`],
       ['Time balanced', `${tel.pendulumBalancedS.toFixed(1)} s`],
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Pendulum angle from upright (deg)';
-    chart1Legend.innerHTML = legend([[C_MAIN, 'Angle'], ['rgba(52,199,89,0.45)', '±10° band']]
-      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base']] : []));
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Angle'], ['rgba(0, 0, 0, 0.16)', '±10° band']]
+      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base', true]] : []));
     series = [{ color: C_MAIN, tag: '', digits: 1, breakJump: 180, get: (p) => p.pendulumAngleDeg }];
     if (tel.ghost) {
       series.push({ color: C_GHOST, digits: 1, dash: [4, 3], breakJump: 180,
@@ -2020,8 +2065,8 @@ function updateHudAndPlots(tel, rtf) {
     chartOpts = {
       yRange: [-180, 180],
       unit: 'deg',
-      bands: [{ min: -10, max: 10, color: 'rgba(52, 199, 89, 0.12)' }],
-      guides: [{ value: 0, color: 'rgba(36, 138, 61, 0.55)' }],
+      bands: [{ min: -10, max: 10, color: 'rgba(0, 0, 0, 0.05)' }],
+      guides: [{ value: 0, color: 'rgba(0, 0, 0, 0.28)' }],
     };
   } else if (currentDemoId === 5) {
     boxes = [
@@ -2033,11 +2078,11 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Base sway vs end-effector error (mm)';
-    chart1Legend.innerHTML = legend([[C_ORANGE, 'Base'], [C_MAIN, 'End effector'], [C_GREEN, 'RMSE']]);
+    chart1Legend.innerHTML = legend([[C_SIGNAL, 'Base'], [C_MAIN, 'End effector'], [C_STAT, 'RMSE', true]]);
     series = [
-      { color: C_ORANGE, tag: '', digits: 1, get: (p) => p.beamTipDispMm || 0 },
+      { color: C_SIGNAL, tag: '', digits: 1, width: 1.3, get: (p) => p.beamTipDispMm || 0 },
       { color: C_MAIN, tag: '', digits: 2, get: (p) => p.eePosErrMm },
-      { color: C_GREEN, tag: '', digits: 2, get: (p) => p.eePosRmseMm },
+      { color: C_STAT, tag: '', digits: 2, dash: STAT_DASH, get: (p) => p.eePosRmseMm },
     ];
     chartOpts = { nonNegative: true, includeZero: true, unit: 'mm' };
   } else {
@@ -2048,11 +2093,11 @@ function updateHudAndPlots(tel, rtf) {
       ['Max torque', `${tel.maxTorqueNm.toFixed(1)} N&middot;m`],
     ];
     chart1Title.textContent = 'Docking gap (mm) and contact force (N)';
-    chart1Legend.innerHTML = legend([[C_MAIN, 'Gap'], [C_ORANGE, 'Force']]
-      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base gap']] : []));
+    chart1Legend.innerHTML = legend([[C_MAIN, 'Gap'], [C_SIGNAL, 'Force']]
+      .concat(tel.ghost ? [[C_GHOST, 'Fixed-base gap', true]] : []));
     series = [
       { color: C_MAIN, tag: '', digits: 2, get: (p) => p.dockingGapMm },
-      { color: C_ORANGE, tag: '', digits: 2, get: (p) => p.dockingForceN },
+      { color: C_SIGNAL, tag: '', digits: 2, width: 1.3, get: (p) => p.dockingForceN },
     ];
     if (tel.ghost) {
       series.push({ color: C_GHOST, digits: 2, dash: [4, 3], get: (p) => (p.ghost ? p.ghost.dockingGapMm : null) });
@@ -2060,7 +2105,7 @@ function updateHudAndPlots(tel, rtf) {
     chartOpts = {
       includeZero: true,
       unit: 'mm / N',
-      guides: [{ value: 0, color: 'rgba(36, 138, 61, 0.55)', label: 'seated' }],
+      guides: [{ value: 0, color: 'rgba(0, 0, 0, 0.28)', label: 'seated' }],
     };
   }
 
@@ -2191,6 +2236,8 @@ function captureTelemetry(tel) {
     dockingGapMm: t.dockingGapMm,
     dockingSeated: t.dockingSeated,
     phase: t.phase,
+    glassTiltDeg: t.glassTiltDeg,
+    wineSpilled: t.wineSpilled,
   });
   return { ...pick(tel), ghost: tel.ghost ? pick(tel.ghost) : null };
 }
@@ -2198,6 +2245,12 @@ function captureTelemetry(tel) {
 function syncCtrlSeg() {
   const on = !!currentParams.controllerEnabled;
   for (const b of segCtrlBtns) b.classList.toggle('active', (b.dataset.on === '1') === on);
+  syncGhostRow();
+}
+
+// The fixed-base ghost runs next to our controller; with the baseline itself selected the toggle has no effect.
+function syncGhostRow() {
+  rowGhost.classList.toggle('hidden', !GHOST_DEMOS.has(currentDemoId) || !currentParams.controllerEnabled);
 }
 
 function syncBaseSeg() {
@@ -2517,7 +2570,7 @@ function renderTaskSpecificControls() {
   teleopCard.classList.toggle('hidden', isBeam);
   rowBaseMode.classList.toggle('hidden', isBeam);
   segCtrlBase.textContent = 'Fixed-base';
-  rowGhost.classList.toggle('hidden', !GHOST_DEMOS.has(currentDemoId));
+  syncGhostRow();
   document.getElementById('ctrlHint').textContent = GHOST_DEMOS.has(currentDemoId)
     ? 'Fixed-base: a conventional controller that assumes the base is still. The ghost runs it under the same base motion.'
     : 'Fixed-base: a conventional controller that assumes the base is still.';
@@ -2688,7 +2741,21 @@ function setCameraPreset(preset, smooth = true) {
   }
   const presets = getCameraPresetsForDemo(currentDemoId);
   const c = presets[preset] || DEMO_META[currentDemoId].cam;
-  applyCamera(c, presets[preset] ? preset : null, smooth);
+  applyCamera(fitCameraToViewport(c), presets[preset] ? preset : null, smooth);
+}
+
+// The presets are framed for a landscape view. On narrower ones (phones) pull back and slide the target
+// toward the end effector, so the task stays in frame instead of falling off the right edge.
+const DESIGN_ASPECT = 1.3;
+function fitCameraToViewport(c) {
+  const aspect = camera.aspect || DESIGN_ASPECT;
+  if (aspect >= DESIGN_ASPECT * 0.92) return c;
+  const focus = getCameraPresetsForDemo(currentDemoId).ee.target;
+  const k = Math.min(1, (DESIGN_ASPECT - aspect) / 0.8);
+  const target = c.target.map((v, i) => v + 0.6 * k * (focus[i] - v));
+  const scale = 1 + 0.45 * k;
+  const pos = c.pos.map((v, i) => target[i] + (v - c.target[i]) * scale);
+  return { ...c, pos, target };
 }
 
 let pendingInitialCam = null;
@@ -2702,6 +2769,7 @@ function selectDemo(id, extraOverrides = null) {
   document.querySelectorAll('.demo-tab').forEach((btn) => {
     btn.classList.toggle('active', Number(btn.dataset.demo) === resolvedId);
   });
+  revealActiveTab();
   history = [];
   trailCount = 0;
   lastTelemetryTime = -1;
@@ -2762,7 +2830,7 @@ worker.onmessage = async (e) => {
       applyCamera(pathCam, 'path', useSmooth);
     } else {
       const cam = DEMO_META[currentDemoId].cam;
-      applyCamera(cam, cam.preset || null, useSmooth);
+      applyCamera(fitCameraToViewport(cam), cam.preset || null, useSmooth);
     }
     if (!hasRenderedFirstScene) setTimeout(maybeStartTour, 1400);
     hasRenderedFirstScene = true;
@@ -2896,6 +2964,27 @@ function placeForceLabel() {
 document.querySelectorAll('.demo-tab').forEach((btn) => {
   btn.onclick = () => selectDemo(Number(btn.dataset.demo));
 });
+
+// Narrow screens: the tab strip scrolls; fade the edge that hides tabs and keep the active tab in view.
+const demoTabsEl = document.getElementById('demoTabs');
+function syncTabFade() {
+  const max = demoTabsEl.scrollWidth - demoTabsEl.clientWidth;
+  demoTabsEl.classList.toggle('fade-l', demoTabsEl.scrollLeft > 2);
+  demoTabsEl.classList.toggle('fade-r', demoTabsEl.scrollLeft < max - 2);
+}
+function revealActiveTab() {
+  const tab = demoTabsEl.querySelector('.demo-tab.active');
+  if (!tab) return;
+  const left = tab.offsetLeft - demoTabsEl.offsetLeft;
+  const right = left + tab.offsetWidth;
+  if (left < demoTabsEl.scrollLeft + 24) demoTabsEl.scrollTo({ left: Math.max(0, left - 24), behavior: 'smooth' });
+  else if (right > demoTabsEl.scrollLeft + demoTabsEl.clientWidth - 24) {
+    demoTabsEl.scrollTo({ left: right - demoTabsEl.clientWidth + 24, behavior: 'smooth' });
+  }
+}
+demoTabsEl.addEventListener('scroll', syncTabFade, { passive: true });
+window.addEventListener('resize', syncTabFade);
+syncTabFade();
 document.querySelectorAll('.cam-btn[data-cam]').forEach((btn) => {
   btn.onclick = () => setCameraPreset(btn.dataset.cam, true);
 });
@@ -2924,10 +3013,10 @@ for (const b of segCtrlBtns) {
     currentParams.controllerEnabled = b.dataset.on === '1';
     syncCtrlSeg();
     lastReadoutMs = 0;
-    if ([0, 1, 4, 5].includes(currentDemoId)) {
+    if ([0, 1, 2, 4, 5].includes(currentDemoId)) {
       // Ours runs the elastic sim-accuracy plant, the fixed-base baseline the rigid scene: reload.
       const keep = ['controllerEnabled', 'teleopTarget', 'trackingMode', 'movingSupport', 'supportScale',
-        'beamTaskMode', 'beamDisturber', 'beamYoungGpa', 'dockingCase'];
+        'beamTaskMode', 'beamDisturber', 'beamYoungGpa', 'dockingCase', 'pendulumStartUpright'];
       selectDemo(currentDemoId, Object.fromEntries(keep.map((k) => [k, currentParams[k]])));
       return;
     }
@@ -3193,6 +3282,9 @@ if (initDemo === 5) {
   }
 }
 if (qs.has('ghost')) ghostChoice[initDemo] = qs.get('ghost') !== '0';
+// Recordings: the pose-frame triads and force arrows read as debug graphics in a clip.
+if (captureMode || qs.get('frames') === '0') chkOverlayFrames.checked = false;
+if (captureMode) chkOverlayForce.checked = false;
 if (qs.get('overlays') === '0') {
   chkOverlayPath.checked = false;
   chkOverlayFrames.checked = false;

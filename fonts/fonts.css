@@ -1,0 +1,6 @@
+/* Self-hosted Inter (OFL.txt), so every visitor sees the same type, not Arial on Windows.
+   Shared by the project page (./fonts/fonts.css) and the simulator (../fonts/fonts.css). */
+@font-face { font-family: 'Inter Web'; font-style: normal; font-weight: 400; font-display: swap; src: url('Inter-Regular.woff') format('woff'); }
+@font-face { font-family: 'Inter Web'; font-style: normal; font-weight: 500; font-display: swap; src: url('Inter-Medium.woff') format('woff'); }
+@font-face { font-family: 'Inter Web'; font-style: normal; font-weight: 600; font-display: swap; src: url('Inter-SemiBold.woff') format('woff'); }
+@font-face { font-family: 'Inter Display Web'; font-style: normal; font-weight: 600; font-display: swap; src: url('InterDisplay-SemiBold.woff') format('woff'); }
